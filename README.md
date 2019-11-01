@@ -34,11 +34,11 @@ async def boop(raw_socket_msg):
 async def beep(raw_socket_msg):
     print(f'[Server] {raw_socket_msg}')
 
-client.run('name', 'access_token')
+client.run('login_name', 'access_token')
 ```
 
 ## Useful Links
 
-- [Documentation](http://soon-tm)
-    - As you can see, there is none yet :) I'm waiting until the library gets more complete/more mature as right now some major redesigns could potentially happen
+- [Documentation](https://twitchpi.readthedocs.io/en/latest/)
+    - As you can see, there isn't much here yet :) I'm waiting until the library gets more complete/more mature as right now some major redesigns could potentially happen
 - [Get an access token](https://twitchapps.com/tmi/)
