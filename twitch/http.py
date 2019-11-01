@@ -546,16 +546,24 @@ class HTTPClient:
         route = HTTPRoute('PUT', '/users/extensions')
         json = {'data': {}}
 
-        json['data']['panel'] = [{str(idx): {'active': active, 'id': panel_id, 'version': version, 'name': name}} for
-                                 idx, active, panel_id, version, name in panels]
+        def inc(i):
+            return i+1
+
+        json['data']['panel'] = [
+            {inc(i): {'active': tup[0], 'id': tup[1], 'version': tup[2]}} for i, tup in
+            list(enumerate(panels))
+        ]
 
         json['data']['component'] = [
-            {str(idx): {'active': active, 'id': component_id, 'version': version, 'name': name, 'x': x, 'y': y}} for
-            idx, active, component_id, version, name, x, y in components]
+            {inc(i): {'active': tup[0], 'id': tup[1], 'version': tup[2], 'x': tup[3], 'y': tup[4]}} for i, tup in
+            list(enumerate(components))
+        ]
 
-        json['data']['overlay'] = [{str(idx): {'active': active, 'id': overlay_id, 'version': version, 'name': name}}
-                                   for
-                                   idx, active, overlay_id, version, name in overlays]
+        json['data']['overlay'] = [
+            {inc(i): {'active': tup[0], 'id': tup[1], 'version': tup[2]}} for i, tup in
+            list(enumerate(overlays))
+        ]
+
         return self.request(route, json=json)
 
     # videos
