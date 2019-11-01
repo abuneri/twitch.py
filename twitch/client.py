@@ -7,8 +7,8 @@ import websockets
 from .event import EventHandler, Event
 from .http import HTTPClient, HTTPException
 from .websocket import TwitchWebSocket, TwitchBackoff, WebSocketConnectionClosed
-
 from .exception import TwitchException
+from .user import User
 
 log = logging.getLogger(__name__)
 
@@ -63,8 +63,8 @@ class Client:
 
     async def _connect(self):
         ws = TwitchWebSocket.create_client(self)
-        # TODO: emit a User object a long with this
-        self.event_handler.emit(Event.CONNECTED)
+        user = await self.get_user(login=self.username)
+        self.event_handler.emit(Event.CONNECTED, user)
         self.ws = await asyncio.wait_for(ws, timeout=120.0, loop=self.loop)
         while True:
             await self.ws.poll_event()
@@ -156,6 +156,19 @@ class Client:
 
         if not future.cancelled():
             return future.result()
+
+    async def get_user(self, *, user_id=None, login=None):
+        user_ids = [user_id] if user_id else None
+        logins = [login] if login else None
+        users = await self.get_users(user_ids=user_ids, logins=logins)
+        for user in users:
+            if user_id == user.user_id or login == user.login:
+                return user
+
+    async def get_users(self, *, user_ids=None, logins=None):
+        resp = await self.http.get_users(user_ids=user_ids, logins=logins)
+        users = [User(data) for data in resp['data'] if resp and resp['data']]
+        return users
 
     @staticmethod
     def _cleanup_loop(loop):

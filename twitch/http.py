@@ -505,9 +505,11 @@ class HTTPClient:
         route = HTTPRoute('GET', '/users')
         params = MultiDict()
         if user_ids:
-            [params.add('id', user_id) for user_id in user_ids]
+            for user_id in user_ids:
+                params.add('id', user_id)
         if logins:
-            [params.add('login', login) for login in logins]
+            for login in logins:
+                params.add('login', login)
         return self.request(route, params=params)
 
     def get_user_follows(self, *, from_id=None, to_id=None, after=None, first=None):
