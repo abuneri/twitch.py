@@ -75,6 +75,7 @@ class HTTPRoute:
 
 class HTTPClient:
     RETRY_LIMIT = 10
+    TOKEN_PREFIX = 'oauth:'
 
     def __init__(self, connector=None, loop=None):
         self.loop = loop if loop else asyncio.get_event_loop()
@@ -98,6 +99,7 @@ class HTTPClient:
         await self.create_session(new_token)
 
     async def create_session(self, access_token):
+        access_token = HTTPClient._normalize_access_token(access_token)
         self._session = aiohttp.ClientSession(connector=self.connector, loop=self.loop)
         previous_token = self._access_token
         self._access_token = access_token
@@ -117,6 +119,12 @@ class HTTPClient:
     async def close_session(self):
         if self._session:
             await self._session.close()
+
+    @staticmethod
+    def _normalize_access_token(access_token):
+        # ensure the token doesn't have the prefix that https://twitchapps.com/tmi/ automatically prepends.
+        # this is a common place for people to get their access tokens from so its good to handle this for users
+        return access_token.lstrip(HTTPClient.TOKEN_PREFIX)
 
     @staticmethod
     def _get_ratelimit_reset(reset_epoch):
