@@ -64,8 +64,8 @@ class Client:
     async def _connect(self):
         ws = TwitchWebSocket.create_client(self)
         user = await self.get_user(login=self.username)
-        self.event_handler.emit(Event.CONNECTED, user)
         self.ws = await asyncio.wait_for(ws, timeout=120.0, loop=self.loop)
+        self.event_handler.emit(Event.CONNECTED, user)
         while True:
             await self.ws.poll_event()
 
