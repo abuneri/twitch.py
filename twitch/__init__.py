@@ -8,3 +8,4 @@ __version__ = '0.1.0'
 
 from .client import Client
 from .event import Event
+from .user import User
