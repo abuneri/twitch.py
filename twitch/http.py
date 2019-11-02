@@ -86,7 +86,8 @@ class HTTPClient:
         self._rate_limit_reset = None
 
         py_version = '{1[0]}.{1[1]}'.format(__version__, sys.version_info)
-        user_agent = f'TwitchBot (https://github.com/sedruk/twitch.py {__version__})' \
+        user_agent = f'TwitchBot (https://github.com/sedruk/twitch.py ' \
+                     f'{__version__})' \
                      f'Python/{py_version} aiohttp/{aiohttp.__version__}'
         self.user_agent = user_agent
 
@@ -100,7 +101,8 @@ class HTTPClient:
 
     async def create_session(self, access_token):
         access_token = HTTPClient._normalize_access_token(access_token)
-        self._session = aiohttp.ClientSession(connector=self.connector, loop=self.loop)
+        self._session = aiohttp.ClientSession(connector=self.connector,
+                                              loop=self.loop)
         previous_token = self._access_token
         self._access_token = access_token
 
@@ -109,12 +111,15 @@ class HTTPClient:
         except HTTPException as e:
             self._access_token = previous_token
             if e.status == 401:
-                raise HTTPNotAuthorized(e.response, 'invalid/expired access token has been passed')
+                raise HTTPNotAuthorized(e.response,
+                                        'invalid/expired access token '
+                                        'has been passed')
             raise
 
     def recreate_session(self):
         if self._session and self._session.closed:
-            self._session = aiohttp.ClientSession(connector=self.connector, loop=self.loop)
+            self._session = aiohttp.ClientSession(connector=self.connector,
+                                                  loop=self.loop)
 
     async def close_session(self):
         if self._session:
@@ -122,8 +127,10 @@ class HTTPClient:
 
     @staticmethod
     def _normalize_access_token(access_token):
-        # ensure the token doesn't have the prefix that https://twitchapps.com/tmi/ automatically prepends.
-        # this is a common place for people to get their access tokens from so its good to handle this for users
+        # ensure the token doesn't have the prefix that
+        # https://twitchapps.com/tmi/ automatically prepends.
+        # this is a common place for people to get their access tokens
+        # from so its good to handle this for users
         return access_token.lstrip(HTTPClient.TOKEN_PREFIX)
 
     @staticmethod
@@ -168,14 +175,21 @@ class HTTPClient:
         await lock.acquire()
         with LockHelper(lock) as lock_helper:
             for attempt in range(HTTPClient.RETRY_LIMIT):
-                async with self._session.request(method, url, **kwargs) as response:
-                    log.info(f'request to {method} {url} with {kwargs.get("data")} returned {response.status}')
+                async with self._session.request(method, url,
+                                                 **kwargs) as response:
+                    log.info(
+                        f'request to {method} {url} with {kwargs.get("data")} '
+                        f'returned {response.status}')
 
                     data = await response.json()
 
-                    reset_seconds = self._handle_ratelimit(bucket, response.headers, response.status)
+                    reset_seconds = self._handle_ratelimit(bucket,
+                                                           response.headers,
+                                                           response.status)
                     if reset_seconds:
-                        log.info(f'bucket {bucket} rate limit has been exhausted. Retrying in {reset_seconds} seconds')
+                        log.info(
+                            f'bucket {bucket} rate limit has been exhausted. '
+                            f'Retrying in {reset_seconds} seconds')
                         lock_helper.defer()
                         self.loop.call_later(reset_seconds, lock.release)
 
@@ -184,22 +198,29 @@ class HTTPClient:
                         return data
 
                     if response.status == 429:
-                        # from https://dev.twitch.tv/docs/api/guide 'Rate Limit' section. there it states the refill
-                        # rate is per minute, since the API doesn't provide us with when we should retry, im just
-                        # picking a reasonable value that will allow some points to be re-filled
+                        # from https://dev.twitch.tv/docs/api/guide
+                        # 'Rate Limit' section. there it states the refill
+                        # rate is per minute, since the API doesn't provide
+                        # us with when we should retry, im just
+                        # picking a reasonable value that will allow some
+                        # points to be re-filled
                         arbitrary_retry = 5
-                        msg = f'the client is being rate limited. Bucket {bucket} rate limit has been exceeded. ' \
+                        msg = f'the client is being rate limited. Bucket ' \
+                              f'{bucket} rate limit has been exceeded. ' \
                               f'retrying in {arbitrary_retry} seconds'
                         log.warning(msg)
 
                         await asyncio.sleep(arbitrary_retry, loop=self.loop)
-                        log.info(f'sleep complete for the rate limited bucket {bucket}. Retrying...')
+                        log.info(
+                            f'sleep complete for the rate limited bucket '
+                            f'{bucket}. Retrying...')
 
                         continue
 
                     if response.status in (500, 502):
                         retry = 1 + attempt * 2
-                        log.info(f'server side error, retrying in {retry} seconds')
+                        log.info(
+                            f'server side error, retrying in {retry} seconds')
                         await asyncio.sleep(retry, loop=self.loop)
                         continue
 
@@ -212,13 +233,15 @@ class HTTPClient:
                     else:
                         raise HTTPException(response, data)
 
-            log.info(f'request to {method} {url} with {kwargs.get("data")} was '
-                     f'attempted {HTTPClient.RETRY_LIMIT} times without success')
+            log.info(
+                f'request to {method} {url} with {kwargs.get("data")} was '
+                f'attempted {HTTPClient.RETRY_LIMIT} times without success')
             raise HTTPException(response, data)
 
     # analytics
 
-    def get_extension_analytics(self, *, after=None, ended_at=None, extension_id=None, first=None, started_at=None,
+    def get_extension_analytics(self, *, after=None, ended_at=None,
+                                extension_id=None, first=None, started_at=None,
                                 analystics_type=None):
         route = HTTPRoute('GET', '/analytics/extensions')
         params = {}
@@ -236,7 +259,8 @@ class HTTPClient:
             params['type'] = analystics_type
         return self.request(route, params=params)
 
-    def get_game_analytics(self, *, after=None, ended_at=None, first=None, game_id=None, started_at=None,
+    def get_game_analytics(self, *, after=None, ended_at=None, first=None,
+                           game_id=None, started_at=None,
                            analystics_type=None):
         route = HTTPRoute('GET', '/analytics/games')
         params = {}
@@ -256,7 +280,8 @@ class HTTPClient:
 
     # bits
 
-    def get_bits_leaderboard(self, *, count=None, period=None, started_at=None, user_id=None):
+    def get_bits_leaderboard(self, *, count=None, period=None, started_at=None,
+                             user_id=None):
         route = HTTPRoute('GET', '/bits/leaderboard')
         params = {}
         if count:
@@ -271,7 +296,8 @@ class HTTPClient:
 
     # extensions
 
-    def get_extension_transactions(self, *, extension_id, transaction_id=None, after=None, first=None):
+    def get_extension_transactions(self, *, extension_id, transaction_id=None,
+                                   after=None, first=None):
         route = HTTPRoute('GET', '/extensions/transactions')
         params = {'extension_id': extension_id}
         if transaction_id:
@@ -291,7 +317,8 @@ class HTTPClient:
             params['has_delay'] = has_delay
         return self.request(route, params=params)
 
-    def get_clips(self, broadcaster_id=None, game_id=None, clip_id=None, *, after=None, before=None, ended_at=None,
+    def get_clips(self, broadcaster_id=None, game_id=None, clip_id=None, *,
+                  after=None, before=None, ended_at=None,
                   first=None, started_at=None):
         route = HTTPRoute('GET', '/clips')
         params = {}
@@ -315,7 +342,8 @@ class HTTPClient:
 
     # entitlements
 
-    def create_entitlement_grants_upload_url(self, *, manifest_id, entitlement_type):
+    def create_entitlement_grants_upload_url(self, *, manifest_id,
+                                             entitlement_type):
         route = HTTPRoute('POST', '/entitlements/upload')
         params = {'manifest_id': manifest_id, 'type': entitlement_type}
         return self.request(route, params=params)
@@ -358,11 +386,14 @@ class HTTPClient:
         route = HTTPRoute('POST', '/moderation/enforcements/status')
         params = {'broadcaster_id': broadcaster_id}
         json = {}
-        json['data'] = [{'msg_id': msg_id, 'msg_text': msg_text, 'user_id': user_id} for (msg_id, msg_text, user_id) in
-                        messages]
+        json['data'] = [
+            {'msg_id': msg_id, 'msg_text': msg_text, 'user_id': user_id} for
+            (msg_id, msg_text, user_id) in
+            messages]
         return self.request(route, params=params, json=json)
 
-    def get_banned_events(self, *, broadcaster_id, user_id=None, after=None, first=None):
+    def get_banned_events(self, *, broadcaster_id, user_id=None, after=None,
+                          first=None):
         route = HTTPRoute('GET', '/moderation/banned/events')
         params = {'broadcaster_id': broadcaster_id}
         if user_id:
@@ -373,7 +404,8 @@ class HTTPClient:
             params['first'] = first
         return self.request(route, params=params)
 
-    def get_banned_users(self, *, broadcaster_id, user_id=None, after=None, first=None):
+    def get_banned_users(self, *, broadcaster_id, user_id=None, after=None,
+                         first=None):
         route = HTTPRoute('GET', '/moderation/banned')
         params = {'broadcaster_id': broadcaster_id}
         if user_id:
@@ -411,7 +443,8 @@ class HTTPClient:
 
     # streams
 
-    def get_streams(self, *, after=None, before=None, first=None, game_id=None, language=None, user_id=None,
+    def get_streams(self, *, after=None, before=None, first=None, game_id=None,
+                    language=None, user_id=None,
                     user_login=None):
         route = HTTPRoute('GET', '/streams')
         params = {}
@@ -433,7 +466,8 @@ class HTTPClient:
 
     # stream metadata
 
-    def get_streams_metadata(self, *, after=None, before=None, first=None, game_id=None, language=None, user_id=None,
+    def get_streams_metadata(self, *, after=None, before=None, first=None,
+                             game_id=None, language=None, user_id=None,
                              user_login=None):
         route = HTTPRoute('GET', '/streams/metadata')
         params = {}
@@ -462,7 +496,8 @@ class HTTPClient:
             json['description'] = description
         return self.request(route, json=json)
 
-    def get_stream_markers(self, *, user_id, video_id, after=None, before=None, first=None):
+    def get_stream_markers(self, *, user_id, video_id, after=None, before=None,
+                           first=None):
         route = HTTPRoute('GET', '/streams/markers')
         params = {'user_id': user_id, 'video_id': video_id}
         if after:
@@ -512,7 +547,8 @@ class HTTPClient:
                 params.add('login', login)
         return self.request(route, params=params)
 
-    def get_user_follows(self, *, from_id=None, to_id=None, after=None, first=None):
+    def get_user_follows(self, *, from_id=None, to_id=None, after=None,
+                         first=None):
         route = HTTPRoute('GET', '/users/follows')
         params = {}
         if from_id:
@@ -544,25 +580,29 @@ class HTTPClient:
             params['user_id'] = user_id
         return self.request(route, params=params)
 
-    def update_user_extensions(self, *, panels=None, components=None, overlays=None):
+    def update_user_extensions(self, *, panels=None, components=None,
+                               overlays=None):
         route = HTTPRoute('PUT', '/users/extensions')
         json = {'data': {}}
 
         def inc(i):
-            return i+1
+            return i + 1
 
         json['data']['panel'] = [
-            {inc(i): {'active': tup[0], 'id': tup[1], 'version': tup[2]}} for i, tup in
+            {inc(i): {'active': tup[0], 'id': tup[1], 'version': tup[2]}} for
+            i, tup in
             list(enumerate(panels))
         ]
 
         json['data']['component'] = [
-            {inc(i): {'active': tup[0], 'id': tup[1], 'version': tup[2], 'x': tup[3], 'y': tup[4]}} for i, tup in
+            {inc(i): {'active': tup[0], 'id': tup[1], 'version': tup[2],
+                      'x': tup[3], 'y': tup[4]}} for i, tup in
             list(enumerate(components))
         ]
 
         json['data']['overlay'] = [
-            {inc(i): {'active': tup[0], 'id': tup[1], 'version': tup[2]}} for i, tup in
+            {inc(i): {'active': tup[0], 'id': tup[1], 'version': tup[2]}} for
+            i, tup in
             list(enumerate(overlays))
         ]
 
@@ -570,7 +610,8 @@ class HTTPClient:
 
     # videos
 
-    def get_videos(self, *, video_id, user_id, game_id, after=None, before=None, first=None, language=None, period=None,
+    def get_videos(self, *, video_id, user_id, game_id, after=None,
+                   before=None, first=None, language=None, period=None,
                    sort=None, video_type=None):
         route = HTTPRoute('GET', '/videos')
         params = {'id': video_id, 'user_id': user_id, 'game_id': game_id}
@@ -601,9 +642,11 @@ class HTTPClient:
             params['first'] = first
         return self.request(route, params=params)
 
-    def create_webhook(self, *, hub_callback, hub_mode, hub_topic, hub_lease_seconds=None, hub_secret=None):
+    def create_webhook(self, *, hub_callback, hub_mode, hub_topic,
+                       hub_lease_seconds=None, hub_secret=None):
         route = HTTPRoute('POST', '/webhooks/hub')
-        json = {'hub.callback': hub_callback, 'hub.mode': hub_mode, 'hub.topic': hub_topic}
+        json = {'hub.callback': hub_callback, 'hub.mode': hub_mode,
+                'hub.topic': hub_topic}
         if hub_lease_seconds:
             json['hub.lease_seconds'] = hub_lease_seconds
         if hub_secret:
