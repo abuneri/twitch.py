@@ -10,9 +10,13 @@ class Event:
     PINGED = 'ping'
     PONGED = 'pong'
 
+    # request events
+    TAG_REQUEST_ACKED = 'tag_request_acked'
+
     # connection state events
     CONNECTED = 'connected'
     DISCONNECT = 'disconnect'
+    AUTHENTICATED = 'authenticated'
 
     # raw socket events
     SOCKET_SEND = 'socket_send'
@@ -20,8 +24,8 @@ class Event:
 
     # standard events
     MESSAGE = 'message'
-    CHANNEL_JOINED = 'channel_join'
-    CHANNEL_LEFT = 'channel_leave'
+    USER_JOIN_CHANNEL = 'user_join_channel'
+    USER_LEFT_CHANNEL = 'user_leave_channel'
     LIST_CHATTERS = 'list_chatters'
     MOD_STATUS_CHANGED = 'mod_status_updated'
     CHAT_CLEARED = 'chat_cleared'
