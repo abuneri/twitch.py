@@ -10,6 +10,7 @@ from .event import Event
 from .utils import split_skip_empty_parts
 from .http import HTTPClient
 from .message import Message
+from .channel import Channel
 
 log = logging.getLogger()
 
@@ -153,6 +154,11 @@ class TwitchWebSocket(websockets.client.WebSocketClientProtocol):
             f'{channel_name}'
         await self.send(join_msg)
 
+    async def send_message(self, channel_name, message):
+        priv_msg = f'{TwitchWebSocket.PRIVMSG} ' \
+                   f'{TwitchWebSocket.CHANNEL_PREFIX}{channel_name} :{message}'
+        await self.send(priv_msg)
+
     # incoming message management
 
     async def poll_event(self):
@@ -209,7 +215,10 @@ class TwitchWebSocket(websockets.client.WebSocketClientProtocol):
                     text = TwitchWebSocket._get_args(msg_dict)
                     if text:
                         text = ' '.join(text).lstrip(':')
-                        message = Message(text, user, channel_name)
+                        channel = Channel(channel_name, state=self._connection)
+                        message = Message(text, user, channel,
+                                          state=self._connection)
+
                         self._emit(Event.MESSAGE, message)
 
                 elif opcode == TwitchWebSocket.JOIN:

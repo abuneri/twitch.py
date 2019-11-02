@@ -79,7 +79,8 @@ class Client:
 
     async def get_users(self, *, user_ids=None, logins=None):
         resp = await self.http.get_users(user_ids=user_ids, logins=logins)
-        users = [User(data) for data in resp['data'] if resp and resp['data']]
+        users = [User(data, state=self) for data in resp['data'] if
+                 resp and resp['data']]
         return users
 
     # =================== #
@@ -88,6 +89,9 @@ class Client:
 
     async def join_channel(self, channel_name):
         await self.ws.send_join(channel_name)
+
+    async def send_message(self, channel_name, message):
+        await self.ws.send_message(channel_name, message)
 
     # ===================== #
     # connection management #
