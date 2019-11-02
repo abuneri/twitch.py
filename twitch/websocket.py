@@ -64,13 +64,22 @@ class TwitchWebSocket(websockets.client.WebSocketClientProtocol):
 
     # general opcodes
     PRIVMSG = 'PRIVMSG'
-    NOTICE = 'NOTICE'
 
     # membership opcodes
     JOIN = 'JOIN'
     PART = 'PART'
     MODE = 'MODE'
     NAMES = 'NAMES'
+
+    # commands opcodes
+    CLEARCHAT = 'CLEARCHAT'
+    CLEARMSG = 'CLEARMSG'
+    HOSTTARGET = 'HOSTTARGET'
+    NOTICE = 'NOTICE'
+    RECONNECT = 'RECONNECT'
+    ROOMSTATE = 'ROOMSTATE'
+    USERNOTICE = 'USERNOTICE'
+    USERSTATE = 'USERSTATE'
 
     _glhf_parts = [
         ('001', ':Welcome, GLHF!'),

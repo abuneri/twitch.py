@@ -6,23 +6,31 @@ log = logging.getLogger(__name__)
 
 
 class Event:
-    # heartbeat/keep-alive opcodes
+    # heartbeat/keep-alive events
     PINGED = 'ping'
     PONGED = 'pong'
 
-    # connection state opcodes
+    # connection state events
     CONNECTED = 'connected'
     DISCONNECT = 'disconnect'
 
-    # raw socket opcodes
+    # raw socket events
     SOCKET_SEND = 'socket_send'
     SOCKET_RECEIVE = 'socket_receive'
 
-    # standard opcodes
+    # standard events
     MESSAGE = 'message'
     CHANNEL_JOINED = 'channel_join'
     CHANNEL_LEFT = 'channel_leave'
+    LIST_CHATTERS = 'list_chatters'
     MOD_STATUS_CHANGED = 'mod_status_updated'
+    CHAT_CLEARED = 'chat_cleared'
+    MESSAGE_CLEARED = 'message_cleared'
+    HOST_MODE_CHANGED = 'host_mode_updated'
+    CHANNELS_REJOINED = 'channels_rejoined'
+    CHANNEL_STATE_CHANGED = 'channel_state_update'
+    USER_NOTIFICATION = 'user_noitification'
+    USER_STATE_CHANGED = 'user_updated'
 
     # unknown opcode
     # will notify listeners about any undocumented and/or
