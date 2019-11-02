@@ -27,7 +27,7 @@ AN_AWESOME_STREAMER = '<streamer>'
 async def on_connected(user):
     print('We connected yo!')
     print(f'Bot username: {user.login}')
-    print(f'Bot id: {user.user_id}')
+    print(f'Bot id: {user.id}')
     print('---------------------\n')
     
     print(f'Joining {AN_AWESOME_STREAMER}s channel...')

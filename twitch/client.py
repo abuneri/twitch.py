@@ -71,7 +71,7 @@ class Client:
         logins = [login] if login else None
         users = await self.get_users(user_ids=user_ids, logins=logins)
         for user in users:
-            if user_id == user.user_id or login == user.login:
+            if user_id == user.id or login == user.login:
                 return user
 
     async def get_users(self, *, user_ids=None, logins=None):
