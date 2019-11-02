@@ -1,16 +1,15 @@
-import asyncio
-import json
 import logging
 import time
 
 import websockets
 
-from .exception import TwitchException
-from .event import Event
+from .opcodes import OpCode
+from .events import Event
+from .exception import WebSocketConnectionClosed
 from .utils import split_skip_empty_parts
 from .http import HTTPClient
-from .message import Message
-from .channel import Channel
+from .parser import SingleLineMessageParser, MultiLineMessageParser, TMI_URL, \
+    CHANNEL_PREFIX, BASE_URL
 
 log = logging.getLogger()
 
@@ -39,57 +38,8 @@ class TwitchBackoff:
             return self._sleep_period
 
 
-class WebSocketException(TwitchException):
-    def __init__(self, original):
-        super().__init__(str(original))
-
-
-class WebSocketConnectionClosed(WebSocketException):
-    pass
-
-
-class WebSocketLoginFailure(WebSocketException):
-    pass
-
-
 class TwitchWebSocket(websockets.client.WebSocketClientProtocol):
     WSS_URL = 'wss://irc-ws.chat.twitch.tv:443'
-    TMI_URL = 'tmi.twitch.tv'
-    BASE_URL = 'twitch.tv'
-
-    CHANNEL_PREFIX = '#'
-    TAG_IDENTIFIER = '@'
-    TAG_SEPARATOR = ';'
-
-    # connection management opcodes
-    PING = 'PING'
-    PONG = 'PONG'
-    NICK = 'NICK'
-    PASS = 'PASS'
-
-    # general opcodes
-    PRIVMSG = 'PRIVMSG'
-
-    # membership opcodes
-    JOIN = 'JOIN'
-    PART = 'PART'
-    MODE = 'MODE'
-    NAMES = 'NAMES'
-
-    # commands opcodes
-    CLEARCHAT = 'CLEARCHAT'
-    CLEARMSG = 'CLEARMSG'
-    HOSTTARGET = 'HOSTTARGET'
-    NOTICE = 'NOTICE'
-    RECONNECT = 'RECONNECT'
-    ROOMSTATE = 'ROOMSTATE'
-    USERNOTICE = 'USERNOTICE'
-    USERSTATE = 'USERSTATE'
-
-    # capability request opcodes
-    CAP = 'CAP'
-    ACK = 'ACK'
-    REQ = 'REQ'
 
     _GLHF_PARTS = [
         ('001', ':Welcome, GLHF!'),
@@ -146,31 +96,31 @@ class TwitchWebSocket(websockets.client.WebSocketClientProtocol):
         self._emit(Event.SOCKET_SEND, data)
 
     async def send_authenticate(self):
-        pass_msg = f'{TwitchWebSocket.PASS} {self.access_token}'
-        nick_msg = f'{TwitchWebSocket.NICK} {self.username}'
+        pass_msg = f'{OpCode.PASS} {self.access_token}'
+        nick_msg = f'{OpCode.NICK} {self.username}'
 
         await self.send(pass_msg)
         await self.send(nick_msg)
 
     async def send_pong(self):
-        pong_msg = f'{TwitchWebSocket.PONG} :{TwitchWebSocket.TMI_URL}'
+        pong_msg = f'{OpCode.PONG} :{TMI_URL}'
         await self.send(pong_msg)
         self._emit(Event.PONGED)
 
     async def send_join(self, channel_name):
         join_msg = \
-            f'{TwitchWebSocket.JOIN} {TwitchWebSocket.CHANNEL_PREFIX}' \
+            f'{OpCode.JOIN} {CHANNEL_PREFIX}' \
             f'{channel_name}'
         await self.send(join_msg)
 
     async def send_message(self, channel_name, message):
-        priv_msg = f'{TwitchWebSocket.PRIVMSG} ' \
-                   f'{TwitchWebSocket.CHANNEL_PREFIX}{channel_name} :{message}'
+        priv_msg = f'{OpCode.PRIVMSG} ' \
+                   f'{CHANNEL_PREFIX}{channel_name} :{message}'
         await self.send(priv_msg)
 
     async def send_tags_request(self):
-        req_tags_msg = f'{TwitchWebSocket.CAP} {TwitchWebSocket.REQ} ' \
-                       f':{TwitchWebSocket.BASE_URL}/tags'
+        req_tags_msg = f'{OpCode.CAP} {OpCode.REQ} ' \
+                       f':{BASE_URL}/tags'
         await self.send(req_tags_msg)
 
     # incoming message management
@@ -190,161 +140,22 @@ class TwitchWebSocket(websockets.client.WebSocketClientProtocol):
         msg_parts = self._handle_glhf(msg_parts)
         if msg_parts:
             if len(msg_parts) == 1:
-                await self._handle_single_line_opcode(msg_parts[0])
+                parser = SingleLineMessageParser(ws=self)
+                await parser.parse(msg_parts[0])
             else:
-                await self._handle_multi_line_opcode(msg_parts)
-
-    async def _handle_single_line_opcode(self, msg):
-        # TODO: move this code into its own module
-        if TwitchWebSocket.PING in msg:
-            self._emit(Event.PINGED)
-            await self.send_pong()
-        elif TwitchWebSocket.NOTICE in msg:
-            if msg.endswith('Login authentication failed'):
-                raise WebSocketLoginFailure(
-                    'login authentication failed. ensure the username and '
-                    'access token is valid')
-
-        elif TwitchWebSocket.MODE in msg:
-            msg_parts = split_skip_empty_parts(msg)
-            if len(msg_parts) == 5:
-                channel_name = msg_parts[2]
-                gained = '+' in msg_parts[3]
-                username = msg_parts[4]
-                user = await self._session.get_user(login=username)
-                self._emit(Event.MOD_STATUS_CHANGED, user, channel_name,
-                           gained)
-
-        elif TwitchWebSocket.CAP in msg:
-            if TwitchWebSocket.ACK in msg:
-                if msg.endswith(f':{TwitchWebSocket.BASE_URL}/tags'):
-                    self._emit(Event.TAG_REQUEST_ACKED)
-
-        else:
-            """
-            msg format is always this for these opcodes:
-
-            [options tags]* :[<user>!<user>@<user>.]tmi.twitch.tv <opcode>
-            #<channel> [optional args]*
-            """
-            msg_parts = split_skip_empty_parts(msg)
-            if not msg_parts:
-                return
-
-            have_tags = msg_parts[0].startswith(TwitchWebSocket.TAG_IDENTIFIER)
-            tags_msg = msg_parts.pop(0) if have_tags else None
-            if tags_msg:
-                tags_msg = tags_msg.lstrip(TwitchWebSocket.TAG_IDENTIFIER)
-            tags_dict = TwitchWebSocket._parse_tags(tags_msg)
-
-            msg_dict = TwitchWebSocket._parse_msg(msg_parts)
-            if msg_dict:
-                opcode = msg_dict['opcode']
-                channel_name = msg_dict['channel_name']
-                username = msg_dict['username']
-                user = await self._session.get_user(login=username)
-
-                if opcode == TwitchWebSocket.PRIVMSG:
-                    text = TwitchWebSocket._get_args(msg_dict)
-                    if text:
-                        text = ' '.join(text).lstrip(':')
-                        channel = Channel(channel_name, session=self._session)
-                        message = Message(text, user, channel,
-                                          session=self._session)
-
-                        self._emit(Event.MESSAGE, message)
-
-                elif opcode == TwitchWebSocket.JOIN:
-                    self._emit(Event.USER_JOIN_CHANNEL, user, channel_name)
-
-                elif opcode == TwitchWebSocket.PART:
-                    self._emit(Event.USER_LEFT_CHANNEL, user, channel_name)
-
-                # TODO: handle remaining op codes
-
-                else:
-                    self._emit(Event.UNKNOWN, msg)
-
-    async def _handle_multi_line_opcode(self, msg_parts):
-        # TODO: fix parsing of multi-line messages and move code to
-        #  its own module
-        if TwitchWebSocket.NAMES in msg_parts:
-            final_line = ':End of /NAMES list'
-            usernames = []
-            channel_name = None
-            for names in msg_parts:
-                if final_line not in names:
-                    usernames.append(TwitchWebSocket._parse_names(names))
-                else:
-                    final_line_parts = split_skip_empty_parts(names)
-                    channel_name = final_line_parts[3] if len(
-                        final_line_parts) == 8 else None
-
-            if usernames and None not in usernames and channel_name:
-                users = await self._session.get_users(logins=usernames)
-                self._emit(Event.LIST_CHATTERS, users, channel_name)
+                parser = MultiLineMessageParser(ws=self)
+                await parser.parse(msg_parts)
 
     def _handle_glhf(self, msg_parts):
-        glhf = [f':{TwitchWebSocket.TMI_URL} {k} {self.username} {v}' for k, v
+        glhf = [f':{TMI_URL} {k} {self.username} {v}' for k, v
                 in TwitchWebSocket._GLHF_PARTS]
 
         if msg_parts == glhf:
             self._authenticated = True
             self._emit(Event.AUTHENTICATED)
             return None
-        elif not self._authenticated:
-            raise WebSocketLoginFailure
         else:
             return msg_parts
-
-    @staticmethod
-    def _get_args(msg_dict):
-        if 'args' in msg_dict:
-            return msg_dict['args']
-        return None
-
-    @staticmethod
-    def _parse_msg(msg_parts):
-        msg_dict = {}
-        num_parts = len(msg_parts)
-        if num_parts > 2:
-            msg_dict['username'] = TwitchWebSocket._parse_tmi(msg_parts[0])
-            msg_dict['opcode'] = msg_parts[1]
-            msg_dict['channel_name'] = msg_parts[2].lstrip(
-                TwitchWebSocket.CHANNEL_PREFIX)
-        if num_parts > 3:
-            msg_dict['args'] = msg_parts[3:]
-        return msg_dict
-
-    @staticmethod
-    def _parse_tmi(tmi):
-        tmi_suffix = f'.{TwitchWebSocket.TMI_URL}'
-        if tmi.endswith(tmi_suffix):
-            tmi_len = len(tmi_suffix)
-            user_str = tmi[:-tmi_len]
-            user_parts = user_str.split('@')
-            if len(user_parts) == 2:
-                return user_parts[1]
-        return None
-
-    @staticmethod
-    def _parse_names(names_msg):
-        msg_parts = split_skip_empty_parts(names_msg, ':')
-        if len(msg_parts) == 2:
-            return split_skip_empty_parts(msg_parts[1])
-
-    @staticmethod
-    def _parse_tags(tags_msg):
-        if not tags_msg:
-            return None
-
-        tag_parts = split_skip_empty_parts(tags_msg,
-                                           TwitchWebSocket.TAG_SEPARATOR)
-
-        def extract_kv(tag):
-            return tag[0], tag[1]
-        tags_dict = {extract_kv(tag) for tag in tag_parts if len(tag) == 2}
-        return tags_dict
 
     async def _authenticated_handler(self):
         if self.use_tags:
