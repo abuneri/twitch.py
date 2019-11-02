@@ -6,6 +6,7 @@ from .exception import WebSocketLoginFailure
 from .utils import split_skip_empty_parts
 from .message import Message
 from .channel import Channel
+from.capability import Capability, CapabilityConfig
 
 CHANNEL_PREFIX = '#'
 TAG_IDENTIFIER = '@'
@@ -13,6 +14,13 @@ TAG_SEPARATOR = ';'
 
 TMI_URL = 'tmi.twitch.tv'
 BASE_URL = 'twitch.tv'
+
+TAGS_CAPABILITY = f'{BASE_URL}/tags'
+MEMBERSHIP_CAPABILITY = f'{BASE_URL}/membership'
+COMMANDS_CAPABILITY = f'{BASE_URL}/commands'
+CHAT_ROOMS_CAPABILITY = f':{TAGS_CAPABILITY} {COMMANDS_CAPABILITY}'
+
+CAPABILITY_ACK_PREFIX = f':{TMI_URL} {OpCode.CAP} * {OpCode.ACK}'
 
 
 class IMessageParser:
@@ -50,10 +58,18 @@ class SingleLineMessageParser(MessageParserHandler, IMessageParser):
                 self._ws._emit(Event.MOD_STATUS_CHANGED, user, channel_name,
                                gained)
 
-        elif OpCode.CAP in msg:
-            if OpCode.ACK in msg:
-                if msg.endswith(f':{BASE_URL}/tags'):
-                    self._ws._emit(Event.TAG_REQUEST_ACKED)
+        elif CAPABILITY_ACK_PREFIX in msg:
+            capability = _get_capability_ack_single(msg)
+            if not capability:
+                return
+            if capability == Capability.TAGS:
+                self._ws._emit(Event.TAG_REQUEST_ACKED)
+            elif capability == Capability.MEMBERSHIP:
+                self._ws._emit(Event.MEMBERSHIP_REQUEST_ACKED)
+            elif capability == Capability.COMMANDS:
+                self._ws._emit(Event.COMMANDS_REQUEST_ACKED)
+            elif capability == Capability.CHAT_ROOMS:
+                self._ws._emit(Event.CHAT_ROOMS_REQUEST_ACKED)
 
         else:
             """
@@ -108,8 +124,23 @@ class MultiLineMessageParser(MessageParserHandler, IMessageParser):
         super().__init__(ws=ws)
 
     async def parse(self, msg_parts):
-        # TODO: fix parsing of multi-line messages
-        if OpCode.NAMES in msg_parts:
+        cap_ack = all([CAPABILITY_ACK_PREFIX in msg for msg in msg_parts])
+
+        if cap_ack:
+            cap_config = _get_capability_ack_multi(msg_parts)
+            if cap_config.tags:
+                self._ws._emit(Event.TAG_REQUEST_ACKED)
+            if cap_config.membership:
+                self._ws._emit(Event.MEMBERSHIP_REQUEST_ACKED)
+            if cap_config.commands:
+                self._ws._emit(Event.COMMANDS_REQUEST_ACKED)
+            if cap_config.chat_rooms:
+                # although the doc says chat rooms doesn't have an ack, it
+                # actually does...
+                self._ws._emit(Event.CHAT_ROOMS_REQUEST_ACKED)
+
+        elif OpCode.NAMES in msg_parts:
+            # TODO: fix parsing of this msg
             final_line = ':End of /NAMES list'
             usernames = []
             channel_name = None
@@ -172,3 +203,32 @@ def _parse_tags(tags_msg):
 
     tags_dict = {extract_kv(tag) for tag in tag_parts if len(tag) == 2}
     return tags_dict
+
+
+def _get_capability_ack_single(msg):
+    if msg.endswith(f':{TAGS_CAPABILITY}'):
+        return Capability.TAGS
+    elif msg.endswith(f':{MEMBERSHIP_CAPABILITY}'):
+        return Capability.MEMBERSHIP
+    elif msg.endswith(f':{COMMANDS_CAPABILITY}'):
+        return Capability.COMMANDS
+    elif msg.endswith(f'{CHAT_ROOMS_CAPABILITY}'):
+        return Capability.CHAT_ROOMS
+    return None
+
+
+def _get_capability_ack_multi(msg_parts):
+    tags = any(
+        [msg.endswith(f':{TAGS_CAPABILITY}') for msg in msg_parts]
+    )
+    membership = any(
+        [msg.endswith(f':{MEMBERSHIP_CAPABILITY}') for msg in msg_parts]
+    )
+    commands = any(
+        [msg.endswith(f':{COMMANDS_CAPABILITY}') for msg in msg_parts]
+    )
+    chat_rooms = any(
+        [msg.endswith(f'{CHAT_ROOMS_CAPABILITY}') for msg in msg_parts]
+    )
+
+    return CapabilityConfig(tags, membership, commands, chat_rooms)

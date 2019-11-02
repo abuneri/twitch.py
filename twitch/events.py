@@ -43,7 +43,7 @@ USER_STATE_CHANGED = 'user_updated'
 UNKNOWN = 'unknown'
 """
 
-EventDef = namedtuple('EventDef', 'PINGED PONGED TAG_REQUEST_ACKED CONNECTED '
+EventDef = namedtuple('EventDef', 'PINGED PONGED CONNECTED '
                                   'DISCONNECT AUTHENTICATED SOCKET_SEND '
                                   'SOCKET_RECEIVE MESSAGE USER_JOIN_CHANNEL '
                                   'USER_LEFT_CHANNEL LIST_CHATTERS '
@@ -51,11 +51,13 @@ EventDef = namedtuple('EventDef', 'PINGED PONGED TAG_REQUEST_ACKED CONNECTED '
                                   'MESSAGE_CLEARED '
                                   'HOST_MODE_CHANGED CHANNELS_REJOINED '
                                   'CHANNEL_STATE_CHANGED USER_NOTIFICATION '
-                                  'USER_STATE_CHANGED UNKNOWN')
+                                  'USER_STATE_CHANGED UNKNOWN '
+                                  'TAG_REQUEST_ACKED MEMBERSHIP_REQUEST_ACKED '
+                                  'COMMANDS_REQUEST_ACKED '
+                                  'CHAT_ROOMS_REQUEST_ACKED')
 
 Event = EventDef(PINGED='ping',
                  PONGED='pong',
-                 TAG_REQUEST_ACKED='tag_request_acked',
                  CONNECTED='connected',
                  DISCONNECT='disconnect',
                  AUTHENTICATED='authenticated',
@@ -73,4 +75,8 @@ Event = EventDef(PINGED='ping',
                  CHANNEL_STATE_CHANGED='channel_state_update',
                  USER_NOTIFICATION='user_noitification',
                  USER_STATE_CHANGED='user_updated',
+                 TAG_REQUEST_ACKED='tag_request_acked',
+                 MEMBERSHIP_REQUEST_ACKED='membership_request_acked',
+                 COMMANDS_REQUEST_ACKED='commands_request_acked',
+                 CHAT_ROOMS_REQUEST_ACKED='chat_rooms_request_acked',
                  UNKNOWN='unknown')

@@ -1,4 +1,14 @@
-class Capability:
+import enum
+
+
+class Capability(enum.Enum):
+    TAGS = 0
+    COMMANDS = 1
+    MEMBERSHIP = 2
+    CHAT_ROOMS = 3
+
+
+class CapabilityConfig:
     def __init__(self, tags=True, membership=True, commands=True,
                  chat_rooms=True):
         self._tags = tags
@@ -20,4 +30,4 @@ class Capability:
 
     @property
     def chat_rooms(self):
-        return self.chat_rooms
+        return self._chat_rooms

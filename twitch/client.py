@@ -4,6 +4,7 @@ import signal
 import aiohttp
 import websockets
 
+from .capability import CapabilityConfig
 from .events import Event
 from .event_handler import EventHandler
 from .http import HTTPClient, HTTPException
@@ -15,10 +16,10 @@ log = logging.getLogger(__name__)
 
 
 class Client:
-    def __init__(self, *, use_tags=True, loop=None, **kwargs):
+    def __init__(self, *, capability=CapabilityConfig(), loop=None, **kwargs):
         self.ws = None
         self.username = None
-        self.use_tags = use_tags
+        self.capability = capability
         self.loop = loop if loop else asyncio.get_event_loop()
         self.event_handler = EventHandler(self.loop)
 
