@@ -104,7 +104,7 @@ class TwitchWebSocket(websockets.client.WebSocketClientProtocol):
                                       compression=None)
 
         # add attributes to TwitchWebSocket
-        ws._connection = client
+        ws._session = client
         ws.username = client.username
         token = client.http.access_token
         ws.access_token = token if token.startswith(
@@ -196,7 +196,7 @@ class TwitchWebSocket(websockets.client.WebSocketClientProtocol):
                 channel_name = msg_parts[2]
                 gained = '+' in msg_parts[3]
                 username = msg_parts[4]
-                user = await self._connection.get_user(login=username)
+                user = await self._session.get_user(login=username)
                 self._emit(Event.MOD_STATUS_CHANGED, user, channel_name,
                            gained)
 
@@ -209,15 +209,15 @@ class TwitchWebSocket(websockets.client.WebSocketClientProtocol):
                 opcode = msg_dict['opcode']
                 channel_name = msg_dict['channel_name']
                 username = msg_dict['username']
-                user = await self._connection.get_user(login=username)
+                user = await self._session.get_user(login=username)
 
                 if opcode == TwitchWebSocket.PRIVMSG:
                     text = TwitchWebSocket._get_args(msg_dict)
                     if text:
                         text = ' '.join(text).lstrip(':')
-                        channel = Channel(channel_name, state=self._connection)
+                        channel = Channel(channel_name, session=self._session)
                         message = Message(text, user, channel,
-                                          state=self._connection)
+                                          session=self._session)
 
                         self._emit(Event.MESSAGE, message)
 
@@ -246,7 +246,7 @@ class TwitchWebSocket(websockets.client.WebSocketClientProtocol):
                         final_line_parts) == 8 else None
 
             if usernames and None not in usernames and channel_name:
-                users = await self._connection.get_users(logins=usernames)
+                users = await self._session.get_users(logins=usernames)
                 self._emit(Event.LIST_CHATTERS, users, channel_name)
 
     def _handle_glhf(self, msg_parts):

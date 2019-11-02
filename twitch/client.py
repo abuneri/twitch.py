@@ -79,7 +79,7 @@ class Client:
 
     async def get_users(self, *, user_ids=None, logins=None):
         resp = await self.http.get_users(user_ids=user_ids, logins=logins)
-        users = [User(data, state=self) for data in resp['data'] if
+        users = [User(data, session=self) for data in resp['data'] if
                  resp and resp['data']]
         return users
 

@@ -15,7 +15,7 @@ class UserType(enum.Enum):
 
 
 class User:
-    def __init__(self, json, *, state):
+    def __init__(self, json, *, session):
         self.broadcaster = User._to_broadcaster(json.get('broadcaster_type'))
         self.description = json.get('description')
         self.display_name = json.get('display_name')
@@ -27,7 +27,7 @@ class User:
         self.profile_image_url = json.get('profile_image_url')
         self.user_type = User._to_type(json.get('type'))
         self.view_count = json.get('view_count')
-        self._state = state
+        self._session = session
 
     @staticmethod
     def _to_broadcaster(broadcaster_type):
