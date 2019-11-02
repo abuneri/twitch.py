@@ -2,6 +2,10 @@
 Python wrapper around the Twitch's Helix and Websocket API. General
 design inspired by the [discord.py](https://github.com/Rapptz/discord.py/) library.
 
+
+[Documentation](https://twitchpi.readthedocs.io/en/latest/)
+    - As you can see, there isn't much here yet :) I'm waiting until the library gets more complete/more mature as right now some major redesigns could potentially happen
+
 ## Key Features
 
 - Modern user-friendly asynchronous API using [aiohttp](https://aiohttp.readthedocs.io/en/stable/) and [websockets](https://websockets.readthedocs.io/en/stable/)
@@ -40,8 +44,13 @@ async def message_listener(message):
 client.run('login_name', 'access_token')
 ```
 
-## Useful Links
+``login_name``:
+- The account name of your bot
 
-- [Documentation](https://twitchpi.readthedocs.io/en/latest/)
-    - As you can see, there isn't much here yet :) I'm waiting until the library gets more complete/more mature as right now some major redesigns could potentially happen
-- [Get an access token](https://twitchapps.com/tmi/)
+``access_token``:
+- Token received via one of the [authentication](#authentication) methods. The token can be prefixed with ``oauth:``, but **it doesn't have to be**, the library handles both cases.
+
+## Authentication
+You have two ways to get the access token required
+1. Use an [existing service](https://twitchapps.com/tmi/) to easily get a token
+2. Roll your own with [Twitch's OAuth 2.0 authorization flow](https://dev.twitch.tv/docs/authentication#getting-tokens)
