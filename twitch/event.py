@@ -5,9 +5,6 @@ import collections
 log = logging.getLogger(__name__)
 
 
-EventListener = collections.namedtuple('EventListener', 'predicate event result future')
-
-
 class Event:
     # heartbeat/keep-alive opcodes
     PINGED = 'ping'
@@ -28,7 +25,8 @@ class Event:
     MOD_STATUS_CHANGED = 'mod_status_updated'
 
     # unknown opcode
-    # will notify listeners about any undocumented and/or error messages from twitch
+    # will notify listeners about any undocumented and/or
+    # error messages from twitch
     UNKNOWN = 'unknown'
 
 
@@ -117,7 +115,8 @@ class EventHandler:
     def _schedule_event(self, coro, event_name, *args, **kwargs):
         wrapped = self._run_event(coro, event_name, *args, **kwargs)
         # schedule the task
-        return _EventTask(original_coro=coro, event_name=event_name, coro=wrapped, loop=self.loop)
+        return _EventTask(original_coro=coro, event_name=event_name,
+                          coro=wrapped, loop=self.loop)
 
     async def _run_event(self, coro, event_name, *args, **kwargs):
         try:

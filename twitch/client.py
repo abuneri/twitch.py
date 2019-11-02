@@ -6,7 +6,8 @@ import websockets
 
 from .event import EventHandler, Event
 from .http import HTTPClient, HTTPException
-from .websocket import TwitchWebSocket, TwitchBackoff, WebSocketConnectionClosed
+from .websocket import TwitchWebSocket, TwitchBackoff, \
+    WebSocketConnectionClosed
 from .exception import TwitchException
 from .user import User
 
@@ -37,13 +38,18 @@ class Client:
             def wrapper(coro):
                 event_name = kwargs.get('name')
                 if not asyncio.iscoroutinefunction(coro):
-                    raise TypeError(f'{coro.__name__} must be a coroutine function to be registered')
+                    raise TypeError(
+                        f'{coro.__name__} '
+                        f'must be a coroutine function to be registered')
 
                 real_name = event_name if event_name else coro.__name__
-                alias = f' (with the alias {coro.__name__})' if event_name else ''
+                alias = f' (with the alias ' \
+                        f'{coro.__name__})' if event_name else ''
 
                 client.event_handler.register(real_name, coro)
-                log.debug(f'{real_name}{alias} has successfully been registered as an event')
+                log.debug(
+                    f'{real_name}{alias} '
+                    f'has successfully been registered as an event')
                 return coro
             return wrapper
         return decorator(self)
@@ -117,7 +123,9 @@ class Client:
                 self.event_handler.emit(Event.DISCONNECT)
                 if not reconnect:
                     await self.close()
-                    if isinstance(e, WebSocketConnectionClosed) and e.code == 1000:
+                    if isinstance(e,
+                                  WebSocketConnectionClosed) and \
+                            e.code == 1000:
                         # websocket was closed cleanly, no need to raise here
                         return
                     raise
@@ -208,7 +216,8 @@ class Client:
         for t in tasks:
             t.cancel()
 
-        loop.run_until_complete(asyncio.gather(*tasks, loop=loop, return_exceptions=True))
+        loop.run_until_complete(
+            asyncio.gather(*tasks, loop=loop, return_exceptions=True))
         log.info('all tasks cancelled')
 
         for t in tasks:
@@ -217,7 +226,8 @@ class Client:
             if t.exception():
                 loop.call_exception_handler(
                     {
-                        'message': 'unhandled exception during Client.run() shutdown.',
+                        'message': 'unhandled exception during Client.run() '
+                                   'shutdown.',
                         'exception': t.exception(),
                         'task': t
                     })

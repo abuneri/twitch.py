@@ -19,7 +19,8 @@ CRLF = '\r' + LF
 
 class TwitchBackoff:
     """
-    Using the algorithm recommended by twitch https://dev.twitch.tv/docs/irc/guide#re-connecting-to-twitch-irc
+    Using the algorithm recommended by twitch:
+    https://dev.twitch.tv/docs/irc/guide#re-connecting-to-twitch-irc
     """
     def __init__(self):
         self._sleep_period = 1
@@ -88,13 +89,16 @@ class TwitchWebSocket(websockets.client.WebSocketClientProtocol):
 
     @classmethod
     async def create_client(cls, client):
-        ws = await websockets.connect(TwitchWebSocket.WSS_URL, loop=client.loop, klass=cls, compression=None)
+        ws = await websockets.connect(TwitchWebSocket.WSS_URL,
+                                      loop=client.loop, klass=cls,
+                                      compression=None)
 
         # add attributes to TwitchWebSocket
         ws._connection = client
         ws.username = client.username
         token = client.http.access_token
-        ws.access_token = token if token.startswith(HTTPClient.TOKEN_PREFIX) else f'{HTTPClient.TOKEN_PREFIX}{token}'
+        ws.access_token = token if token.startswith(
+            HTTPClient.TOKEN_PREFIX) else f'{HTTPClient.TOKEN_PREFIX}{token}'
         ws._emit = client.event_handler.emit
 
         log.info(f'websocket created. connected to {TwitchWebSocket.WSS_URL}')
@@ -135,7 +139,9 @@ class TwitchWebSocket(websockets.client.WebSocketClientProtocol):
         self._emit(Event.PONGED)
 
     async def send_join(self, channel_name):
-        join_msg = f'{TwitchWebSocket.JOIN} {TwitchWebSocket.CHANNEL_PREFIX}{channel_name}'
+        join_msg = \
+            f'{TwitchWebSocket.JOIN} {TwitchWebSocket.CHANNEL_PREFIX}' \
+            f'{channel_name}'
         await self.send(join_msg)
 
     # incoming message management
@@ -166,7 +172,8 @@ class TwitchWebSocket(websockets.client.WebSocketClientProtocol):
         elif TwitchWebSocket.NOTICE in msg:
             if msg.endswith('Login authentication failed'):
                 raise WebSocketLoginFailure(
-                    'login authentication failed. ensure the username and access token is valid')
+                    'login authentication failed. ensure the username and '
+                    'access token is valid')
 
         elif TwitchWebSocket.MODE in msg:
             msg_parts = split_skip_empty_parts(msg)
@@ -175,11 +182,13 @@ class TwitchWebSocket(websockets.client.WebSocketClientProtocol):
                 gained = '+' in msg_parts[3]
                 username = msg_parts[4]
                 user = await self._connection.get_user(login=username)
-                self._emit(Event.MOD_STATUS_CHANGED, user, channel_name, gained)
+                self._emit(Event.MOD_STATUS_CHANGED, user, channel_name,
+                           gained)
 
         else:
             # msg format is always this for these opcodes
-            # :<user>!<user>@<user>.tmi.twitch.tv <opcode> #<channel> [optional additional]*
+            # :<user>!<user>@<user>.tmi.twitch.tv <opcode>\
+            # #<channel> [optional additional]*
             msg_dict = TwitchWebSocket._parse_msg(msg)
             if msg_dict:
                 opcode = msg_dict['opcode']
@@ -215,14 +224,16 @@ class TwitchWebSocket(websockets.client.WebSocketClientProtocol):
                     usernames.append(TwitchWebSocket._parse_names(names))
                 else:
                     final_line_parts = split_skip_empty_parts(names)
-                    channel_name = final_line_parts[3] if len(final_line_parts) == 8 else None
+                    channel_name = final_line_parts[3] if len(
+                        final_line_parts) == 8 else None
 
             if usernames and None not in usernames and channel_name:
                 users = await self._connection.get_users(logins=usernames)
                 self._emit(Event.LIST_CHATTERS, users, channel_name)
 
     def _handle_glhf(self, msg_parts):
-        glhf = [f':{TwitchWebSocket.TMI_URL} {k} {self.username} {v}' for k, v in TwitchWebSocket._glhf_parts]
+        glhf = [f':{TwitchWebSocket.TMI_URL} {k} {self.username} {v}' for k, v
+                in TwitchWebSocket._glhf_parts]
         if msg_parts == glhf:
             self.authenticated = True
             return None
@@ -243,7 +254,8 @@ class TwitchWebSocket(websockets.client.WebSocketClientProtocol):
         if num_parts > 2:
             msg_dict['username'] = TwitchWebSocket._parse_tmi(msg_parts[0])
             msg_dict['opcode'] = msg_parts[1]
-            msg_dict['channel_name'] = msg_parts[2].lstrip(TwitchWebSocket.CHANNEL_PREFIX)
+            msg_dict['channel_name'] = msg_parts[2].lstrip(
+                TwitchWebSocket.CHANNEL_PREFIX)
         if num_parts > 3:
             msg_dict['args'] = msg_parts[3:]
         return msg_dict
