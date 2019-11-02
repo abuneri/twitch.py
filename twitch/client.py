@@ -7,7 +7,7 @@ import websockets
 from .event import EventHandler, Event
 from .http import HTTPClient, HTTPException
 from .websocket import TwitchWebSocket, TwitchBackoff, \
-    WebSocketConnectionClosed
+    WebSocketConnectionClosed, WebSocketLoginFailure
 from .exception import TwitchException
 from .user import User
 
@@ -19,9 +19,10 @@ class ClientException(TwitchException):
 
 
 class Client:
-    def __init__(self, *, loop=None, **kwargs):
+    def __init__(self, *, use_tags=True, loop=None, **kwargs):
         self.ws = None
         self.username = None
+        self.use_tags = use_tags
         self.loop = loop if loop else asyncio.get_event_loop()
         self.event_handler = EventHandler(self.loop)
 
@@ -119,6 +120,7 @@ class Client:
             except (OSError,
                     HTTPException,
                     WebSocketConnectionClosed,
+                    WebSocketLoginFailure,
                     aiohttp.ClientError,
                     asyncio.TimeoutError,
                     websockets.InvalidHandshake,
