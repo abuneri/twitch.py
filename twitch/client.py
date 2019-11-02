@@ -4,18 +4,14 @@ import signal
 import aiohttp
 import websockets
 
-from .event import EventHandler, Event
+from .events import Event
+from .event_handler import EventHandler
 from .http import HTTPClient, HTTPException
-from .websocket import TwitchWebSocket, TwitchBackoff, \
-    WebSocketConnectionClosed, WebSocketLoginFailure
-from .exception import TwitchException
+from .websocket import TwitchWebSocket, TwitchBackoff
+from .exception import WebSocketConnectionClosed, WebSocketLoginFailure
 from .user import User
 
 log = logging.getLogger(__name__)
-
-
-class ClientException(TwitchException):
-    pass
 
 
 class Client:
