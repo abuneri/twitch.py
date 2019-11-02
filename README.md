@@ -10,9 +10,11 @@ design inspired by the [discord.py](https://github.com/Rapptz/discord.py/) libra
 
 - Modern user-friendly asynchronous API using [aiohttp](https://aiohttp.readthedocs.io/en/stable/) and [websockets](https://websockets.readthedocs.io/en/stable/)
 - Proper HTTP rate limit handling
-- 100% coverage of the supported **new** Twitch API (**v5 not supported**)
-- 100% coverage of the supported Chatbot/IRC gateway
+- 100% coverage of the supported **new** Twitch API (**v5 not supported**)*
+- 100% coverage of the supported Chatbot/IRC gateway*
 - PEP 8 Compliant
+
+\* The underlying HTTP and Websocket implementations support 100%, but it may not be exposed in the client or models yet (soon:tm:)
 
 ## Simple Example
 #### Echoing a streamers chat
