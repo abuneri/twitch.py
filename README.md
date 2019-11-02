@@ -1,5 +1,5 @@
 # twitch.py
-Python wrapper around the Twitch's Helix and Websocket API. General
+Python wrapper around the Twitch's Helix and IRC API. General
 design inspired by the [discord.py](https://github.com/Rapptz/discord.py/) library.
 
 
@@ -9,8 +9,9 @@ design inspired by the [discord.py](https://github.com/Rapptz/discord.py/) libra
 ## Key Features
 
 - Modern user-friendly asynchronous API using [aiohttp](https://aiohttp.readthedocs.io/en/stable/) and [websockets](https://websockets.readthedocs.io/en/stable/)
-- Proper rate limit handling
+- Proper HTTP rate limit handling
 - 100% coverage of the supported **new** Twitch API (**v5 not supported**)
+- 100% coverage of the supported Chatbot/IRC gateway
 - PEP 8 Compliant
 
 ## Simple Example
