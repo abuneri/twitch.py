@@ -28,6 +28,10 @@ class Client:
         self.http = HTTPClient(connector=connector, loop=self.loop)
         self._closed = False
 
+    # ================ #
+    # event management #
+    # ================ #
+
     def event(self, **kwargs):
         def decorator(client):
             def wrapper(coro):
@@ -54,6 +58,34 @@ class Client:
         listener = self.event_handler[event]
         listener.append((future, check))
         return asyncio.wait_for(future, timeout=timeout, loop=self.loop)
+
+    # ============== #
+    # http utilities #
+    # ============== #
+
+    async def get_user(self, *, user_id=None, login=None):
+        user_ids = [user_id] if user_id else None
+        logins = [login] if login else None
+        users = await self.get_users(user_ids=user_ids, logins=logins)
+        for user in users:
+            if user_id == user.user_id or login == user.login:
+                return user
+
+    async def get_users(self, *, user_ids=None, logins=None):
+        resp = await self.http.get_users(user_ids=user_ids, logins=logins)
+        users = [User(data) for data in resp['data'] if resp and resp['data']]
+        return users
+
+    # =================== #
+    # websocket utilities #
+    # =================== #
+
+    async def join_channel(self, channel_name):
+        await self.ws.send_join(channel_name)
+
+    # ===================== #
+    # connection management #
+    # ===================== #
 
     def is_connected(self):
         return self.event_handler.connected.is_set()
@@ -156,19 +188,6 @@ class Client:
 
         if not future.cancelled():
             return future.result()
-
-    async def get_user(self, *, user_id=None, login=None):
-        user_ids = [user_id] if user_id else None
-        logins = [login] if login else None
-        users = await self.get_users(user_ids=user_ids, logins=logins)
-        for user in users:
-            if user_id == user.user_id or login == user.login:
-                return user
-
-    async def get_users(self, *, user_ids=None, logins=None):
-        resp = await self.http.get_users(user_ids=user_ids, logins=logins)
-        users = [User(data) for data in resp['data'] if resp and resp['data']]
-        return users
 
     @staticmethod
     def _cleanup_loop(loop):
