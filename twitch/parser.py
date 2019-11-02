@@ -71,6 +71,7 @@ class SingleLineMessageParser(MessageParserHandler, IMessageParser):
             if tags_msg:
                 tags_msg = tags_msg.lstrip(TAG_IDENTIFIER)
             tags_dict = _parse_tags(tags_msg)
+            # TODO: used the parsed tag dictionary to set data on models
 
             msg_dict = _parse_msg(msg_parts)
             if msg_dict:

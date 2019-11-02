@@ -16,18 +16,58 @@ class UserType(enum.Enum):
 
 class User:
     def __init__(self, json, *, session):
-        self.broadcaster = User._to_broadcaster(json.get('broadcaster_type'))
-        self.description = json.get('description')
-        self.display_name = json.get('display_name')
-        self.email = json.get('email')
+        self._broadcaster = User._to_broadcaster(json.get('broadcaster_type'))
+        self._description = json.get('description')
+        self._display_name = json.get('display_name')
+        self._email = json.get('email')
         user_id = json.get('id')
-        self.user_id = int(user_id) if user_id else None
-        self.login = json.get('login')
-        self.offline_image_url = json.get('offline_image_url')
-        self.profile_image_url = json.get('profile_image_url')
-        self.user_type = User._to_type(json.get('type'))
-        self.view_count = json.get('view_count')
+        self._user_id = int(user_id) if user_id else None
+        self._login = json.get('login')
+        self._offline_image_url = json.get('offline_image_url')
+        self._profile_image_url = json.get('profile_image_url')
+        self._user_type = User._to_type(json.get('type'))
+        self._view_count = json.get('view_count')
         self._session = session
+
+    @property
+    def broadcaster(self):
+        return self._broadcaster
+
+    @property
+    def description(self):
+        return self._description
+
+    @property
+    def display_name(self):
+        return self._display_name
+
+    @property
+    def email(self):
+        return self.email
+
+    @property
+    def id(self):
+        return self._user_id
+
+    @property
+    def login(self):
+        return self._login
+
+    @property
+    def offline_image_url(self):
+        return self._offline_image_url
+
+    @property
+    def image_url(self):
+        return self._profile_image_url
+
+    @property
+    def type(self):
+        return self._user_type
+
+    @property
+    def view_count(self):
+        return self._view_count
 
     @staticmethod
     def _to_broadcaster(broadcaster_type):
