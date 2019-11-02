@@ -9,10 +9,27 @@ EventListener = collections.namedtuple('EventListener', 'predicate event result 
 
 
 class Event:
+    # heartbeat/keep-alive opcodes
+    PINGED = 'ping'
+    PONGED = 'pong'
+
+    # connection state opcodes
     CONNECTED = 'connected'
+    DISCONNECT = 'disconnect'
+
+    # raw socket opcodes
     SOCKET_SEND = 'socket_send'
     SOCKET_RECEIVE = 'socket_receive'
-    DISCONNECT = 'disconnect'
+
+    # standard opcodes
+    MESSAGE = 'message'
+    CHANNEL_JOINED = 'channel_join'
+    CHANNEL_LEFT = 'channel_leave'
+    MOD_STATUS_CHANGED = 'mod_status_updated'
+
+    # unknown opcode
+    # will notify listeners about any undocumented and/or error messages from twitch
+    UNKNOWN = 'unknown'
 
 
 class _EventTask(asyncio.Task):
