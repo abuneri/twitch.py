@@ -32,7 +32,10 @@ async def on_connected(user):
 
 @client.event(name=twitch.Event.MESSAGE)
 async def message_listener(message):
-    print(f'[#{message.channel}] {message.author.login}: {message.content}')
+    content = message.content
+
+    print(f'[#{message.channel.name}] {message.author.login}: {content}')
+    await message.channel.send(content)
 
 client.run('login_name', 'access_token')
 ```
