@@ -146,8 +146,9 @@ class TwitchWebSocket(websockets.client.WebSocketClientProtocol):
     async def incoming_message(self, msg):
         self._emit(Event.SOCKET_RECEIVE, msg)
 
-        new_line = CRLF if CRLF in msg else LF
-        msg_parts = split_skip_empty_parts(msg, new_line)
+        # IRC spec (https://tools.ietf.org/html/rfc2812)
+        # says new lines will always be CRLF
+        msg_parts = split_skip_empty_parts(msg, CRLF)
         msg_parts = self._handle_glhf(msg_parts)
         if msg_parts:
             if len(msg_parts) == 1:
