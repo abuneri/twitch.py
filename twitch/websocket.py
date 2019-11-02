@@ -9,7 +9,8 @@ from .exception import WebSocketConnectionClosed
 from .utils import split_skip_empty_parts
 from .http import HTTPClient
 from .parser import SingleLineMessageParser, MultiLineMessageParser, TMI_URL, \
-    CHANNEL_PREFIX, BASE_URL
+    CHANNEL_PREFIX, BASE_URL, TAGS_CAPABILITY, MEMBERSHIP_CAPABILITY, \
+    COMMANDS_CAPABILITY
 
 log = logging.getLogger()
 
@@ -40,6 +41,7 @@ class TwitchBackoff:
 
 class TwitchWebSocket(websockets.client.WebSocketClientProtocol):
     WSS_URL = 'wss://irc-ws.chat.twitch.tv:443'
+    CAPABILITY_REQUEST = f'{OpCode.CAP} {OpCode.REQ} :'
 
     _GLHF_PARTS = [
         ('001', ':Welcome, GLHF!'),
@@ -65,7 +67,7 @@ class TwitchWebSocket(websockets.client.WebSocketClientProtocol):
         # add attributes to TwitchWebSocket
         ws._session = client
         ws.username = client.username
-        ws.use_tags = client.use_tags
+        ws.capability = client.capability
         token = client.http.access_token
         ws.access_token = token if token.startswith(
             HTTPClient.TOKEN_PREFIX) else f'{HTTPClient.TOKEN_PREFIX}{token}'
@@ -103,25 +105,34 @@ class TwitchWebSocket(websockets.client.WebSocketClientProtocol):
         await self.send(nick_msg)
 
     async def send_pong(self):
-        pong_msg = f'{OpCode.PONG} :{TMI_URL}'
-        await self.send(pong_msg)
+        msg = f'{OpCode.PONG} :{TMI_URL}'
+        await self.send(msg)
         self._emit(Event.PONGED)
 
     async def send_join(self, channel_name):
-        join_msg = \
-            f'{OpCode.JOIN} {CHANNEL_PREFIX}' \
-            f'{channel_name}'
-        await self.send(join_msg)
+        msg = f'{OpCode.JOIN} {CHANNEL_PREFIX}{channel_name}'
+        await self.send(msg)
 
     async def send_message(self, channel_name, message):
-        priv_msg = f'{OpCode.PRIVMSG} ' \
-                   f'{CHANNEL_PREFIX}{channel_name} :{message}'
-        await self.send(priv_msg)
+        msg = f'{OpCode.PRIVMSG} {CHANNEL_PREFIX}{channel_name} :{message}'
+        await self.send(msg)
 
     async def send_tags_request(self):
-        req_tags_msg = f'{OpCode.CAP} {OpCode.REQ} ' \
-                       f':{BASE_URL}/tags'
-        await self.send(req_tags_msg)
+        msg = f'{TwitchWebSocket.CAPABILITY_REQUEST}{TAGS_CAPABILITY}'
+        await self.send(msg)
+
+    async def send_membership_request(self):
+        msg = f'{TwitchWebSocket.CAPABILITY_REQUEST}{MEMBERSHIP_CAPABILITY}'
+        await self.send(msg)
+
+    async def send_commands_request(self):
+        msg = f'{TwitchWebSocket.CAPABILITY_REQUEST}{COMMANDS_CAPABILITY}'
+        await self.send(msg)
+
+    async def send_chat_rooms_request(self):
+        msg = f'{OpCode.CAP} {OpCode.REQ} :{TAGS_CAPABILITY} ' \
+              f'{COMMANDS_CAPABILITY}'
+        await self.send(msg)
 
     # incoming message management
 
@@ -158,5 +169,11 @@ class TwitchWebSocket(websockets.client.WebSocketClientProtocol):
             return msg_parts
 
     async def _authenticated_handler(self):
-        if self.use_tags:
+        if self.capability.tags:
             await self.send_tags_request()
+        if self.capability.membership:
+            await self.send_membership_request()
+        if self.capability.commands:
+            await self.send_commands_request()
+        if self.capability.chat_rooms:
+            await self.send_chat_rooms_request()
