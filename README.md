@@ -10,11 +10,13 @@ design inspired by the [discord.py](https://github.com/Rapptz/discord.py/) libra
 - PEP 8 Compliant
 
 ## Simple Example
-### Client
+#### Echoing a streamers chat
 ```python
 import twitch
 
 client = twitch.Client()
+
+AN_AWESOME_STREAMER = '<streamer>'
 
 
 @client.event()
@@ -23,16 +25,14 @@ async def on_connected(user):
     print(f'Bot username: {user.login}')
     print(f'Bot id: {user.user_id}')
     print('---------------------\n')
+    
+    print(f'Joining {AN_AWESOME_STREAMER}s channel...')
+    await client.join_channel(AN_AWESOME_STREAMER)
 
 
-@client.event(name=twitch.Event.SOCKET_SEND)
-async def boop(raw_socket_msg):
-    print(f'[Client] {raw_socket_msg}')
-
-
-@client.event(name=twitch.Event.SOCKET_RECEIVE)
-async def beep(raw_socket_msg):
-    print(f'[Server] {raw_socket_msg}')
+@client.event(name=twitch.Event.MESSAGE)
+async def message_listener(message):
+    print(f'[#{message.channel}] {message.author.login}: {message.content}')
 
 client.run('login_name', 'access_token')
 ```
