@@ -40,7 +40,7 @@ USERSTATE = 'USERSTATE'
 
 OpCodeDef = namedtuple('OpCodeDef',
                        'PING PONG NICK PASS PRIVMSG '
-                       'JOIN PART MODE NAMES CLEARCHAT '
+                       'JOIN PART MODE CLEARCHAT '
                        'CLEARMSG HOSTTARGET NOTICE RECONNECT '
                        'ROOMSTATE USERNOTICE USERSTATE CAP ACK REQ')
 
@@ -52,7 +52,6 @@ OpCode = OpCodeDef(PING='PING',
                    JOIN='JOIN',
                    PART='PART',
                    MODE='MODE',
-                   NAMES='NAMES',
                    CLEARCHAT='CLEARCHAT',
                    CLEARMSG='CLEARMSG',
                    HOSTTARGET='HOSTTARGET',

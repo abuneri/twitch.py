@@ -75,6 +75,7 @@ class TwitchWebSocket(websockets.client.WebSocketClientProtocol):
 
         log.info(f'websocket created. connected to {TwitchWebSocket.WSS_URL}')
 
+        # register internal helper handlers
         client.event_handler.register(Event.AUTHENTICATED,
                                       ws._authenticated_handler)
 
@@ -150,13 +151,18 @@ class TwitchWebSocket(websockets.client.WebSocketClientProtocol):
         # says new lines will always be CRLF
         msg_parts = split_skip_empty_parts(msg, CRLF)
         msg_parts = self._handle_glhf(msg_parts)
+        msg_handled = False
         if msg_parts:
             if len(msg_parts) == 1:
                 parser = SingleLineMessageParser(ws=self)
-                await parser.parse(msg_parts[0])
+                msg_handled = await parser.parse(msg_parts[0])
             else:
                 parser = MultiLineMessageParser(ws=self)
-                await parser.parse(msg_parts)
+                msg_handled = await parser.parse(msg_parts)
+
+        if not msg_handled:
+            log.info('following message from the server was not handled:\n'
+                     f'{msg}')
 
     def _handle_glhf(self, msg_parts):
         glhf = [f':{TMI_URL} {k} {self.username} {v}' for k, v
