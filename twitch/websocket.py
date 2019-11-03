@@ -34,7 +34,7 @@ class TwitchBackoff:
             return self._sleep_period
 
 
-class TwitchWebSocket(websockets.client.WebSocketClientProtocol):
+class WebSocketClient(websockets.client.WebSocketClientProtocol):
     WSS_URL = 'wss://irc-ws.chat.twitch.tv:443'
     CAPABILITY_REQUEST = f'{OpCode.CAP} {OpCode.REQ} :'
 
@@ -51,7 +51,7 @@ class TwitchWebSocket(websockets.client.WebSocketClientProtocol):
 
     @classmethod
     async def create_client(cls, client):
-        ws = await websockets.connect(TwitchWebSocket.WSS_URL,
+        ws = await websockets.connect(WebSocketClient.WSS_URL,
                                       loop=client.loop, klass=cls,
                                       compression=None)
 
@@ -59,11 +59,11 @@ class TwitchWebSocket(websockets.client.WebSocketClientProtocol):
         ws._session = client
         ws.username = client.username
         ws.capability = client.capability
-        ws.access_token = TwitchWebSocket._normalize_access_token(
+        ws.access_token = WebSocketClient._normalize_access_token(
             client.http.access_token)
         ws._emit = client.event_handler.emit
 
-        log.info(f'websocket created. connected to {TwitchWebSocket.WSS_URL}')
+        log.info(f'websocket created. connected to {WebSocketClient.WSS_URL}')
 
         # register internal helper handlers
         client.event_handler.register(Event.AUTHENTICATED,
@@ -109,15 +109,15 @@ class TwitchWebSocket(websockets.client.WebSocketClientProtocol):
         await self.send(msg)
 
     async def send_tags_request(self):
-        msg = f'{TwitchWebSocket.CAPABILITY_REQUEST}{TAGS_CAPABILITY}'
+        msg = f'{WebSocketClient.CAPABILITY_REQUEST}{TAGS_CAPABILITY}'
         await self.send(msg)
 
     async def send_membership_request(self):
-        msg = f'{TwitchWebSocket.CAPABILITY_REQUEST}{MEMBERSHIP_CAPABILITY}'
+        msg = f'{WebSocketClient.CAPABILITY_REQUEST}{MEMBERSHIP_CAPABILITY}'
         await self.send(msg)
 
     async def send_commands_request(self):
-        msg = f'{TwitchWebSocket.CAPABILITY_REQUEST}{COMMANDS_CAPABILITY}'
+        msg = f'{WebSocketClient.CAPABILITY_REQUEST}{COMMANDS_CAPABILITY}'
         await self.send(msg)
 
     async def send_chat_rooms_request(self):
