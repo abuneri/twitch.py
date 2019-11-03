@@ -22,6 +22,8 @@ CHAT_ROOMS_CAPABILITY = f':{TAGS_CAPABILITY} {COMMANDS_CAPABILITY}'
 
 CAPABILITY_ACK_PREFIX = f':{TMI_URL} {OpCode.CAP} * {OpCode.ACK}'
 
+NAMES_LIST_END = ':End of /NAMES list'
+
 
 class IMessageParser:
     @abc.abstractmethod
@@ -32,6 +34,11 @@ class IMessageParser:
 class MessageParserHandler:
     def __init__(self, *, ws):
         self._ws = ws
+        self._message_handled = False
+
+    def emit(self, event, *args):
+        self._message_handled = True
+        self._ws._emit(event, *args)
 
 
 class SingleLineMessageParser(MessageParserHandler, IMessageParser):
@@ -39,8 +46,10 @@ class SingleLineMessageParser(MessageParserHandler, IMessageParser):
         super().__init__(ws=ws)
 
     async def parse(self, msg):
+        self._message_handled = False
+
         if OpCode.PING in msg:
-            self._ws._emit(Event.PINGED)
+            self.emit(Event.PINGED)
             await self._ws.send_pong()
         elif OpCode.NOTICE in msg:
             if msg.endswith('Login authentication failed'):
@@ -55,21 +64,21 @@ class SingleLineMessageParser(MessageParserHandler, IMessageParser):
                 gained = '+' in msg_parts[3]
                 username = msg_parts[4]
                 user = await self._ws._session.get_user(login=username)
-                self._ws._emit(Event.MOD_STATUS_CHANGED, user, channel_name,
-                               gained)
+                self.emit(Event.MOD_STATUS_CHANGED, user, channel_name,
+                          gained)
 
         elif CAPABILITY_ACK_PREFIX in msg:
             capability = _get_capability_ack_single(msg)
             if not capability:
                 return
             if capability == Capability.TAGS:
-                self._ws._emit(Event.TAG_REQUEST_ACKED)
+                self.emit(Event.TAG_REQUEST_ACKED)
             elif capability == Capability.MEMBERSHIP:
-                self._ws._emit(Event.MEMBERSHIP_REQUEST_ACKED)
+                self.emit(Event.MEMBERSHIP_REQUEST_ACKED)
             elif capability == Capability.COMMANDS:
-                self._ws._emit(Event.COMMANDS_REQUEST_ACKED)
+                self.emit(Event.COMMANDS_REQUEST_ACKED)
             elif capability == Capability.CHAT_ROOMS:
-                self._ws._emit(Event.CHAT_ROOMS_REQUEST_ACKED)
+                self.emit(Event.CHAT_ROOMS_REQUEST_ACKED)
 
         else:
             """
@@ -105,56 +114,72 @@ class SingleLineMessageParser(MessageParserHandler, IMessageParser):
                         message = Message(text, user, channel,
                                           session=self._ws._session)
 
-                        self._ws._emit(Event.MESSAGE, message)
+                        self.emit(Event.MESSAGE, message)
 
                 elif opcode == OpCode.JOIN:
-                    self._ws._emit(Event.USER_JOIN_CHANNEL, user, channel_name)
+                    self.emit(Event.USER_JOIN_CHANNEL, user, channel_name)
 
                 elif opcode == OpCode.PART:
-                    self._ws._emit(Event.USER_LEFT_CHANNEL, user, channel_name)
+                    self.emit(Event.USER_LEFT_CHANNEL, user, channel_name)
 
                 # TODO: handle remaining op codes
 
                 else:
-                    self._ws._emit(Event.UNKNOWN, msg)
+                    self.emit(Event.UNKNOWN, msg)
+
+        return self._message_handled
 
 
 class MultiLineMessageParser(MessageParserHandler, IMessageParser):
     def __init__(self, *, ws):
         super().__init__(ws=ws)
+        self._sl_parser = SingleLineMessageParser(ws=ws)
 
     async def parse(self, msg_parts):
+        self._message_handled = False
+
         cap_ack = all([CAPABILITY_ACK_PREFIX in msg for msg in msg_parts])
 
         if cap_ack:
             cap_config = _get_capability_ack_multi(msg_parts)
             if cap_config.tags:
-                self._ws._emit(Event.TAG_REQUEST_ACKED)
+                self.emit(Event.TAG_REQUEST_ACKED)
             if cap_config.membership:
-                self._ws._emit(Event.MEMBERSHIP_REQUEST_ACKED)
+                self.emit(Event.MEMBERSHIP_REQUEST_ACKED)
             if cap_config.commands:
-                self._ws._emit(Event.COMMANDS_REQUEST_ACKED)
+                self.emit(Event.COMMANDS_REQUEST_ACKED)
             if cap_config.chat_rooms:
                 # although the doc says chat rooms doesn't have an ack, it
                 # actually does...
-                self._ws._emit(Event.CHAT_ROOMS_REQUEST_ACKED)
-
-        elif OpCode.NAMES in msg_parts:
-            # TODO: fix parsing of this msg
-            final_line = ':End of /NAMES list'
+                self.emit(Event.CHAT_ROOMS_REQUEST_ACKED)
+        else:
             usernames = []
-            channel_name = None
-            for names in msg_parts:
-                if final_line not in names:
-                    usernames.append(_parse_names(names))
+            channel = None
+            for message in msg_parts:
+                if any(
+                        [getattr(OpCode, opcode) in message for opcode in
+                         OpCode._fields]):
+                    self._message_handled = await self._sl_parser.parse(
+                        message)
                 else:
-                    final_line_parts = split_skip_empty_parts(names)
-                    channel_name = final_line_parts[3] if len(
-                        final_line_parts) == 8 else None
+                    # We must have received part of a /NAMES list
+                    if NAMES_LIST_END not in message:
+                        usernames += _parse_names(message)
+                    else:
+                        final_line_parts = split_skip_empty_parts(message)
+                        channel_name = final_line_parts[3].lstrip(
+                            CHANNEL_PREFIX) if len(
+                            final_line_parts) == 8 else None
 
-            if usernames and None not in usernames and channel_name:
+                        if channel_name:
+                            channel = Channel(channel_name,
+                                              session=self._ws._session)
+
+            if usernames and channel:
                 users = await self._ws._session.get_users(logins=usernames)
-                self._ws._emit(Event.LIST_CHATTERS, users, channel_name)
+                self.emit(Event.LIST_USERS, users, channel)
+
+        return self._message_handled
 
 
 def _get_args(msg_dict):
@@ -186,10 +211,11 @@ def _parse_tmi(tmi):
     return None
 
 
-def _parse_names(names_msg):
-    msg_parts = split_skip_empty_parts(names_msg, ':')
+def _parse_names(name_msg):
+    msg_parts = split_skip_empty_parts(name_msg, ':')
     if len(msg_parts) == 2:
-        return split_skip_empty_parts(msg_parts[1])
+        names = msg_parts[1]
+        return split_skip_empty_parts(names)
 
 
 def _parse_tags(tags_msg):
