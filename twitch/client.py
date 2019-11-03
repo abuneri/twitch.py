@@ -44,6 +44,11 @@ class Client:
                 alias = f' (with the alias ' \
                         f'{coro.__name__})' if event_name else ''
 
+                if real_name.startswith('_'):
+                    raise ValueError(
+                        f'event names cannot start with an underscore, '
+                        f'those are reserverd for the library: {real_name}')
+
                 client.event_handler.register(real_name, coro)
                 log.debug(
                     f'{real_name}{alias} '
