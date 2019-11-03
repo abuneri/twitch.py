@@ -6,16 +6,11 @@ import websockets
 from .opcodes import OpCode
 from .events import Event
 from .exception import WebSocketConnectionClosed
-from .utils import split_skip_empty_parts
 from .http import HTTPClient
-from .parser import SingleLineMessageParser, MultiLineMessageParser, TMI_URL, \
-    CHANNEL_PREFIX, BASE_URL, TAGS_CAPABILITY, MEMBERSHIP_CAPABILITY, \
-    COMMANDS_CAPABILITY
+from .parser import MessageParserHandler, TMI_URL, \
+    CHANNEL_PREFIX, TAGS_CAPABILITY, MEMBERSHIP_CAPABILITY, COMMANDS_CAPABILITY
 
 log = logging.getLogger()
-
-LF = '\n'
-CRLF = '\r' + LF
 
 
 class TwitchBackoff:
@@ -42,16 +37,6 @@ class TwitchBackoff:
 class TwitchWebSocket(websockets.client.WebSocketClientProtocol):
     WSS_URL = 'wss://irc-ws.chat.twitch.tv:443'
     CAPABILITY_REQUEST = f'{OpCode.CAP} {OpCode.REQ} :'
-
-    _GLHF_PARTS = [
-        ('001', ':Welcome, GLHF!'),
-        ('002', f':Your host is {TMI_URL}'),
-        ('003', ':This server is rather new'),
-        ('004', ':-'),
-        ('375', ':-'),
-        ('372', ':You are in a maze of twisty passages, all alike.'),
-        ('376', ':>')
-    ]
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -147,33 +132,10 @@ class TwitchWebSocket(websockets.client.WebSocketClientProtocol):
     async def incoming_message(self, msg):
         self._emit(Event.SOCKET_RECEIVE, msg)
 
-        # IRC spec (https://tools.ietf.org/html/rfc2812)
-        # says new lines will always be CRLF
-        msg_parts = split_skip_empty_parts(msg, CRLF)
-        msg_parts = self._handle_glhf(msg_parts)
-        msg_handled = False
-        if msg_parts:
-            if len(msg_parts) == 1:
-                parser = SingleLineMessageParser(ws=self)
-                msg_handled = await parser.parse(msg_parts[0])
-            else:
-                parser = MultiLineMessageParser(ws=self)
-                msg_handled = await parser.parse(msg_parts)
-
+        msg_handled = await MessageParserHandler.parse_irc_message(msg, self)
         if not msg_handled:
             log.info('following message from the server was not handled:\n'
                      f'{msg}')
-
-    def _handle_glhf(self, msg_parts):
-        glhf = [f':{TMI_URL} {k} {self.username} {v}' for k, v
-                in TwitchWebSocket._GLHF_PARTS]
-
-        if msg_parts == glhf:
-            self._authenticated = True
-            self._emit(Event.AUTHENTICATED)
-            return None
-        else:
-            return msg_parts
 
     async def _authenticated_handler(self):
         if self.capability.tags:
