@@ -8,7 +8,7 @@ from .capability import CapabilityConfig
 from .events import Event
 from .event_handler import EventHandler
 from .http import HTTPClient, HTTPException
-from .websocket import TwitchWebSocket, TwitchBackoff
+from .websocket import WebSocketClient, TwitchBackoff
 from .exception import WebSocketConnectionClosed, WebSocketLoginFailure
 from .user import User
 
@@ -107,7 +107,7 @@ class Client:
         await self.event_handler.connected.wait()
 
     async def _connect(self):
-        ws = TwitchWebSocket.create_client(self)
+        ws = WebSocketClient.create_client(self)
         user = await self.get_user(login=self.username)
         self.ws = await asyncio.wait_for(ws, timeout=120.0, loop=self.loop)
         self.event_handler.emit(Event.CONNECTED, user)
