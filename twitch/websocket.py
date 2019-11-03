@@ -43,6 +43,12 @@ class TwitchWebSocket(websockets.client.WebSocketClientProtocol):
         self._emit = lambda *args: None
         self._authenticated = False
 
+    @staticmethod
+    def _normalize_access_token(access_token):
+        return access_token if access_token.startswith(
+            HTTPClient.TOKEN_PREFIX) else \
+            f'{HTTPClient.TOKEN_PREFIX}{access_token}'
+
     @classmethod
     async def create_client(cls, client):
         ws = await websockets.connect(TwitchWebSocket.WSS_URL,
@@ -53,9 +59,8 @@ class TwitchWebSocket(websockets.client.WebSocketClientProtocol):
         ws._session = client
         ws.username = client.username
         ws.capability = client.capability
-        token = client.http.access_token
-        ws.access_token = token if token.startswith(
-            HTTPClient.TOKEN_PREFIX) else f'{HTTPClient.TOKEN_PREFIX}{token}'
+        ws.access_token = TwitchWebSocket._normalize_access_token(
+            client.http.access_token)
         ws._emit = client.event_handler.emit
 
         log.info(f'websocket created. connected to {TwitchWebSocket.WSS_URL}')
