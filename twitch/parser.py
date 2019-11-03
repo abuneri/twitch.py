@@ -8,6 +8,9 @@ from .message import Message
 from .channel import Channel
 from.capability import Capability, CapabilityConfig
 
+LF = '\n'
+CRLF = '\r' + LF
+
 CHANNEL_PREFIX = '#'
 TAG_IDENTIFIER = '@'
 TAG_SEPARATOR = ';'
@@ -24,6 +27,16 @@ CAPABILITY_ACK_PREFIX = f':{TMI_URL} {OpCode.CAP} * {OpCode.ACK}'
 
 NAMES_LIST_END = ':End of /NAMES list'
 
+GLHF_PARTS = [
+    ('001', ':Welcome, GLHF!'),
+    ('002', f':Your host is {TMI_URL}'),
+    ('003', ':This server is rather new'),
+    ('004', ':-'),
+    ('375', ':-'),
+    ('372', ':You are in a maze of twisty passages, all alike.'),
+    ('376', ':>')
+]
+
 
 class IMessageParser:
     @abc.abstractmethod
@@ -39,6 +52,24 @@ class MessageParserHandler:
     def emit(self, event, *args):
         self._message_handled = True
         self._ws._emit(event, *args)
+
+    @staticmethod
+    async def parse_irc_message(msg, ws):
+        # IRC spec (https://tools.ietf.org/html/rfc2812)
+        # says new lines will always be CRLF
+        msg_parts = split_skip_empty_parts(msg, CRLF)
+        msg_parts = _handle_glhf(msg_parts, ws)
+        if msg_parts:
+            if len(msg_parts) == 1:
+                parser = SingleLineMessageParser(ws=ws)
+                return await parser.parse(msg_parts[0])
+            else:
+                parser = MultiLineMessageParser(ws=ws)
+                return await parser.parse(msg_parts)
+        else:
+            ws._authenticated = True
+            ws._emit(Event.AUTHENTICATED)
+            return True
 
 
 class SingleLineMessageParser(MessageParserHandler, IMessageParser):
@@ -180,6 +211,11 @@ class MultiLineMessageParser(MessageParserHandler, IMessageParser):
                 self.emit(Event.LIST_USERS, users, channel)
 
         return self._message_handled
+
+
+def _handle_glhf(msg_parts, ws):
+    glhf = [f':{TMI_URL} {k} {ws.username} {v}' for k, v in GLHF_PARTS]
+    return None if msg_parts == glhf else msg_parts
 
 
 def _get_args(msg_dict):
