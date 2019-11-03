@@ -125,11 +125,11 @@ class TwitchWebSocket(websockets.client.WebSocketClientProtocol):
     async def poll_event(self):
         try:
             msg = await self.recv()
-            await self.incoming_message(msg)
+            await self.receive(msg)
         except websockets.exceptions.ConnectionClosed as e:
             raise WebSocketConnectionClosed(e)
 
-    async def incoming_message(self, msg):
+    async def receive(self, msg):
         self._emit(Event.SOCKET_RECEIVE, msg)
 
         msg_handled = await MessageParserHandler.parse_irc_message(msg, self)
