@@ -38,11 +38,25 @@ USERNOTICE = 'USERNOTICE'
 USERSTATE = 'USERSTATE'
 """
 
-OpCodeDef = namedtuple('OpCodeDef',
-                       'PING PONG NICK PASS PRIVMSG '
-                       'JOIN PART MODE CLEARCHAT '
-                       'CLEARMSG HOSTTARGET NOTICE RECONNECT '
-                       'ROOMSTATE USERNOTICE USERSTATE CAP ACK REQ')
+OpCodeDef = namedtuple('OpCodeDef', 'PING '
+                                    'PONG '
+                                    'NICK '
+                                    'PASS '
+                                    'PRIVMSG '
+                                    'JOIN '
+                                    'PART '
+                                    'MODE '
+                                    'CLEARCHAT '
+                                    'CLEARMSG '
+                                    'HOSTTARGET '
+                                    'NOTICE '
+                                    'RECONNECT '
+                                    'ROOMSTATE '
+                                    'USERNOTICE '
+                                    'USERSTATE '
+                                    'CAP '
+                                    'ACK '
+                                    'REQ')
 
 OpCode = OpCodeDef(PING='PING',
                    PONG='PONG',
