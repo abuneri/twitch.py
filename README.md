@@ -52,19 +52,11 @@ client.run('login_name', 'access_token')
 ```python
 from twitch.plugins.commands import Bot
 
-TWITCH_CHANNEL = '<twitch channel>'
-
 bot = Bot(command_prefix='>')
 
 @bot.event()
 async def on_connected(user):
-    print('We connected yo!')
-    print(f'Bot username: {user.login}')
-    print(f'Bot id: {user.id}')
-    print('---------------------\n')
-
-    print(f'Joining {TWITCH_CHANNEL}s channel...')
-    await bot.join_channel(TWITCH_CHANNEL)
+    await bot.join_channel('channel_name')
 
 
 @bot.command()
