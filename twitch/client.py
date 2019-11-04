@@ -94,6 +94,9 @@ class Client:
         await self.ws.send_join(channel_name)
 
     async def send_message(self, channel_name, message):
+        # TODO: maybe add an opt-in parameter to wait for the sent message
+        # and return it instead of getting nothing back. Might be useful
+        # for some users since they'd get the full metadata of their message
         await self.ws.send_message(channel_name, message)
 
     # ===================== #
