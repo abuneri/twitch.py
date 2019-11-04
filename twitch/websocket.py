@@ -75,10 +75,10 @@ class WebSocketClient(websockets.client.WebSocketClientProtocol):
 
         return ws
 
-    # outgoing message management
-
     async def close(self, code=1000, reason=''):
         super().close(code=code, reason=reason)
+
+    # outgoing message management
 
     async def send(self, data):
         # TODO: Implement message 'rate-limiting' here, as specified
