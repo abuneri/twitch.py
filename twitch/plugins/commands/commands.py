@@ -7,53 +7,6 @@ from . import context
 log = logging.getLogger(__name__)
 
 
-def _convert_to_annotation(sig_param, cmd_param):
-    """
-    Attempt to convert the parameter to the type of the signature parameter.
-    The three builtin types supported are: str, int, and float
-
-    :param sig_param:
-    :param cmd_param:
-    :return:
-    """
-    annotation = sig_param.annotation
-    if str == annotation:
-        return cmd_param
-    elif int == annotation:
-        return int(cmd_param)
-    elif float == annotation:
-        return float(cmd_param)
-    else:
-        # TODO: ? allow registry of custom types and
-        #  auto build based on *args/**kwargs ?
-        return cmd_param
-
-
-def _get_invoke_args(cmd_params, sig_params, ctx):
-    args = [arg for _, arg in zip(sig_params, cmd_params)]
-    typed_args = [_convert_to_annotation(param, arg) for param, arg in
-                  zip(sig_params, args)]
-    if ctx:
-        typed_args.insert(0, ctx)
-    return typed_args
-
-
-def _get_invoke_kwargs(cmd_params, sig_params):
-    kwargs = {}
-    for k, v in zip(sig_params, cmd_params):
-        kwargs[k.name] = _convert_to_annotation(k, v)
-    return kwargs
-
-
-def _log_unsupported_param_kind():
-    log.info('the parameter kind for the commands parameters isn\'t supported')
-
-
-def _same_sig_param_types(sig_params):
-    param_types = [param.kind for param in sig_params]
-    return len(set(param_types)) == 1
-
-
 class CommandParser:
     def __init__(self, command, pass_ctx, cmd_params, sig_params, message):
         self.cmd_params = cmd_params
@@ -159,3 +112,50 @@ class CommandParser:
             await self._invoke_kwargs(self.command, self.ctx, **typed_kwargs)
         else:
             _log_unsupported_param_kind()
+
+
+def _convert_to_annotation(sig_param, cmd_param):
+    """
+    Attempt to convert the parameter to the type of the signature parameter.
+    The three builtin types supported are: str, int, and float
+
+    :param sig_param:
+    :param cmd_param:
+    :return:
+    """
+    annotation = sig_param.annotation
+    if str == annotation:
+        return cmd_param
+    elif int == annotation:
+        return int(cmd_param)
+    elif float == annotation:
+        return float(cmd_param)
+    else:
+        # TODO: ? allow registry of custom types and
+        #  auto build based on *args/**kwargs ?
+        return cmd_param
+
+
+def _get_invoke_args(cmd_params, sig_params, ctx):
+    args = [arg for _, arg in zip(sig_params, cmd_params)]
+    typed_args = [_convert_to_annotation(param, arg) for param, arg in
+                  zip(sig_params, args)]
+    if ctx:
+        typed_args.insert(0, ctx)
+    return typed_args
+
+
+def _get_invoke_kwargs(cmd_params, sig_params):
+    kwargs = {}
+    for k, v in zip(sig_params, cmd_params):
+        kwargs[k.name] = _convert_to_annotation(k, v)
+    return kwargs
+
+
+def _log_unsupported_param_kind():
+    log.info('the parameter kind for the commands parameters isn\'t supported')
+
+
+def _same_sig_param_types(sig_params):
+    param_types = [param.kind for param in sig_params]
+    return len(set(param_types)) == 1
