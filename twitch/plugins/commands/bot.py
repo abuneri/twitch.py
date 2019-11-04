@@ -7,7 +7,7 @@ from inspect import signature
 from functools import partial
 
 import twitch
-from .commands import CommandParser
+from .commands import CommandParser, FuzzyMatch
 
 log = logging.getLogger(__name__)
 
@@ -23,17 +23,11 @@ class Bot(twitch.Client):
     def command(self, **kwargs):
         def decorator(bot):
             def wrapper(coro):
-                """
-                TODO: allow command name to be fuzzy matched with a reasonable
-                 threshold. User can specifc by passing in a bot.FuzzyMatch()
-                 object, which defines the threshold to match on.
-
-                 fuzzy_match = kwargs.get('fuzzy_match', FuzzyMatch.None())
-                """
                 name = kwargs.get('name')
                 pass_ctx = kwargs.get('pass_ctx', True)
-                command_name = name if name else coro.__name__
+                fuzzy_match = kwargs.get('fuzzy_match', FuzzyMatch())
 
+                command_name = name if name else coro.__name__
                 if command_name in bot._commands.keys():
                     raise NameError(f'{command_name} is already a registered'
                                     f'command')
@@ -42,7 +36,7 @@ class Bot(twitch.Client):
                         f'{coro.__name__} '
                         f'must be a coroutine function to be a command')
                 else:
-                    bot._commands[command_name] = (coro, pass_ctx)
+                    bot._commands[command_name] = (coro, pass_ctx, fuzzy_match)
 
             return wrapper
         return decorator(self)
@@ -68,13 +62,39 @@ class Bot(twitch.Client):
             traceback.print_tb(tb, file=sys.stdout)
 
     async def invoke_command(self, name, params, message):
-        command, pass_ctx = self._commands.get(name, (None, False))
+        command, pass_ctx, _ = self._commands.get(name, (None, False,
+                                                         FuzzyMatch()))
         if command:
-            sig = signature(command)
-            sig_params = list(sig.parameters.values())
-            command_parser = CommandParser(command, pass_ctx, params,
-                                           sig_params, message)
-            await command_parser.invoke()
-        else:
-            log.info(f'{name} is not a registered command')
-            pass
+            await self._invoke_command(command, pass_ctx, params, message)
+            return
+        elif FuzzyMatch.HAS_FUZZYWUZZY:
+            best_match = self._fuzzy_match_command(name)
+            if best_match:
+                try:
+                    command, pass_ctx, _ = self._commands[best_match]
+                    await self._invoke_command(command, pass_ctx, params,
+                                               message)
+                    return
+                except KeyError:
+                    pass
+
+        log.info(f'{name} is not a registered command')
+
+    async def _invoke_command(self, command, pass_ctx, params, message):
+        sig = signature(command)
+        sig_params = list(sig.parameters.values())
+        command_parser = CommandParser(command, pass_ctx, params,
+                                       sig_params, message)
+        await command_parser.invoke()
+
+    def _fuzzy_match_command(self, name):
+        matched_commands = {}
+        for command in self._commands.items():
+            command_name, (_,  _, fuzzy_matcher) = command
+            ratio = fuzzy_matcher.match(name, command_name)
+            if ratio >= fuzzy_matcher.threshold:
+                matched_commands[command_name] = ratio
+
+        best_match = max(matched_commands, key=lambda key: matched_commands[
+            key]) if matched_commands else None
+        return best_match

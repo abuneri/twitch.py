@@ -1,10 +1,69 @@
 import logging
 import asyncio
+import enum
 from inspect import Parameter
 
 from . import context
 
+_has_fuzzywuzzy = True
+try:
+    from fuzzywuzzy import fuzz
+except ImportError:
+    _has_fuzzywuzzy = False
+
 log = logging.getLogger(__name__)
+
+
+class FuzzyRatio(enum.Enum):
+    NONE = 0
+    SIMPLE = 1
+    PARTIAL = 2
+    TOKEN_SORT_RATIO = 3
+    TOKEN_SET_RATIO = 4
+
+
+class FuzzyMatch:
+    HAS_FUZZYWUZZY = _has_fuzzywuzzy
+
+    # Note: force_ascii and full_process options only
+    # apply with the TOKEN_SORT_RATIO and TOKEN_SET_RATIO types
+    def __init__(self, ratio=FuzzyRatio.NONE, threshold=95, force_ascii=True,
+                 full_process=True):
+        self._ratio = ratio
+        self._threshold = threshold
+        self._force_ascii = force_ascii
+        self._full_process = full_process
+
+    @property
+    def threshold(self):
+        return self._threshold
+
+    def match(self, user_command, registered_command):
+        if self._ratio == FuzzyRatio.SIMPLE:
+            return self._match_simple(user_command, registered_command)
+        elif self._ratio == FuzzyRatio.PARTIAL:
+            return self._match_partial(user_command, registered_command)
+        elif self._ratio == FuzzyRatio.TOKEN_SORT_RATIO:
+            return self._match_token_sort(user_command, registered_command)
+        elif self._ratio == FuzzyRatio.TOKEN_SET_RATIO:
+            return self._match_token_set(user_command, registered_command)
+        else:
+            # the ratio was NONE
+            return -1
+
+    def _match_simple(self, user_command, registered_command):
+        return fuzz.ratio(user_command, registered_command)
+
+    def _match_partial(self, user_command, registered_command):
+        return fuzz.partial_ratio(user_command, registered_command)
+
+    def _match_token_sort(self, user_command, registered_command):
+        return fuzz.token_sort_ratio(user_command, registered_command,
+                                     self._force_ascii, self._full_process)
+
+    def _match_token_set(self, user_command, registered_command):
+        return fuzz.token_set_ratio(user_command, registered_command,
+                                    self._force_ascii, self._full_process)
 
 
 class CommandParser:
