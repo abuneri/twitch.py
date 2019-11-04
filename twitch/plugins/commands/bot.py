@@ -68,7 +68,7 @@ class Bot(twitch.Client):
             traceback.print_tb(tb, file=sys.stdout)
 
     async def invoke_command(self, name, params, message):
-        command, pass_ctx = self._commands.get(name)
+        command, pass_ctx = self._commands.get(name, (None, False))
         if command:
             sig = signature(command)
             sig_params = list(sig.parameters.values())
