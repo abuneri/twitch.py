@@ -1,5 +1,4 @@
 import logging
-import time
 
 import websockets
 
@@ -21,7 +20,6 @@ class TwitchBackoff:
 
     def __init__(self):
         self._sleep_period = 1
-        self._last_attempt = time.monotonic()
         self._first = True
 
     def sleep_for(self):
