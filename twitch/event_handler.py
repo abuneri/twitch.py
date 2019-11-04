@@ -41,6 +41,14 @@ class EventHandler:
         return listener
 
     def register(self, event, coro):
+        real_coro = coro.func if isinstance(coro, partial) else coro
+        coro_name = real_coro.__name__
+
+        if not asyncio.iscoroutinefunction(real_coro):
+            raise TypeError(
+                f'{coro_name} '
+                f'must be a coroutine function to be registered')
+
         event = f'on_{event}' if not event.startswith('on_') else event
         if event == f'on_{Event.MESSAGE}':
             def get_name(coro):
@@ -49,7 +57,7 @@ class EventHandler:
 
             coros = getattr(self, event, [])
             # ensure the same on_message coro can't be registered twice
-            if get_name(coro) not in [get_name(c) for c in coros]:
+            if coro_name not in [get_name(c) for c in coros]:
                 coros.append(coro)
             setattr(self, event, coros)
         else:
