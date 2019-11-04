@@ -1,5 +1,7 @@
 import logging
 import asyncio
+from functools import partial
+
 from .events import Event
 
 log = logging.getLogger(__name__)
@@ -40,7 +42,18 @@ class EventHandler:
 
     def register(self, event, coro):
         event = f'on_{event}' if not event.startswith('on_') else event
-        setattr(self, event, coro)
+        if event == f'on_{Event.MESSAGE}':
+            def get_name(coro):
+                return coro.func.__name__ if isinstance(coro, partial) else \
+                    coro.__name__
+
+            coros = getattr(self, event, [])
+            # ensure the same on_message coro can't be registered twice
+            if get_name(coro) not in [get_name(c) for c in coros]:
+                coros.append(coro)
+            setattr(self, event, coros)
+        else:
+            setattr(self, event, coro)
 
     def emit(self, event, *args, **kwargs):
         handler = self._handlers.get(event)
@@ -81,31 +94,22 @@ class EventHandler:
                     del listeners[idx]
 
         try:
-            coro = getattr(self, method)
+            if method == f'on_{Event.MESSAGE}':
+                on_message_coros = getattr(self, method)
+                self._schedule_event(on_message_coros, method, *args, **kwargs)
+            else:
+                coro = getattr(self, method)
+                self._schedule_event([coro], method, *args, **kwargs)
         except AttributeError:
             pass
-        else:
-            self._schedule_event(coro, method, *args, **kwargs)
 
-    def _schedule_event(self, coro, event_name, *args, **kwargs):
-        wrapped = self._run_event(coro, event_name, *args, **kwargs)
-        # schedule the task
-        return _EventTask(original_coro=coro, event_name=event_name,
-                          coro=wrapped, loop=self.loop)
-
-    async def _run_event(self, coro, event_name, *args, **kwargs):
-        try:
-            await coro(*args, **kwargs)
-        except asyncio.CancelledError:
-            pass
-        except Exception:
-            try:
-                await self._on_error(event_name)
-            except asyncio.CancelledError:
-                pass
-
-    async def _on_error(self, method):
-        log.error(f'ignoring exception in {method}')
+    def _schedule_event(self, coros, event_name, *args, **kwargs):
+        # schedule the tasks
+        for wrapped_coro, coro in [
+            (_run_event(coro, event_name, *args, **kwargs), coro)
+                for coro in coros]:
+            _EventTask(original_coro=coro, event_name=event_name,
+                       coro=wrapped_coro, loop=self.loop)
 
     @property
     def connected(self):
@@ -116,3 +120,19 @@ class EventHandler:
 
     def _handle_connected(self):
         self._connected.set()
+
+
+async def _on_run_error(method, err):
+    log.info(f'ignoring exception in {method}: {err}')
+
+
+async def _run_event(coro, event_name, *args, **kwargs):
+    try:
+        await coro(*args, **kwargs)
+    except asyncio.CancelledError:
+        pass
+    except Exception as e:
+        try:
+            await _on_run_error(event_name, str(e))
+        except asyncio.CancelledError:
+            pass
