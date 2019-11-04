@@ -13,10 +13,11 @@ design inspired by the [discord.py](https://github.com/Rapptz/discord.py/) libra
 - 100% coverage of the supported **new** Twitch API (**v5 not supported**)*
 - 100% coverage of the supported Chatbot/IRC gateway*
 - PEP 8 Compliant
+- Built in commands plugin
 
 \* The underlying HTTP and Websocket implementations support 100%, but it may not be exposed in the client or models yet (soon:tm:)
 
-## Simple Example
+## Simple Examples
 #### Echoing a streamers chat
 ```python
 import twitch
@@ -46,6 +47,33 @@ async def message_listener(message):
 
 client.run('login_name', 'access_token')
 ```
+
+#### Commands Plugin: Ping-Pong
+```python
+from twitch.plugins.commands import Bot
+
+TWITCH_CHANNEL = '<twitch channel>'
+
+bot = Bot(command_prefix='>')
+
+@bot.event()
+async def on_connected(user):
+    print('We connected yo!')
+    print(f'Bot username: {user.login}')
+    print(f'Bot id: {user.id}')
+    print('---------------------\n')
+
+    print(f'Joining {TWITCH_CHANNEL}s channel...')
+    await bot.join_channel(TWITCH_CHANNEL)
+
+
+@bot.command()
+async def ping(ctx):
+    await ctx.send('pong')
+
+bot.run('login_name', 'access_token')
+```
+
 
 ``login_name``:
 - The account name of your bot
