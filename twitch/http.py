@@ -211,9 +211,10 @@ class HTTPClient:
 
     # analytics
 
-    def get_extension_analytics(self, *, after=None, ended_at=None,
-                                extension_id=None, first=None, started_at=None,
-                                analystics_type=None):
+    async def get_extension_analytics(self, *, after=None, ended_at=None,
+                                      extension_id=None, first=None,
+                                      started_at=None,
+                                      analystics_type=None):
         route = HTTPRoute('GET', '/analytics/extensions')
         params = {}
         if after:
@@ -228,11 +229,12 @@ class HTTPClient:
             params['started_at'] = started_at
         if analystics_type:
             params['type'] = analystics_type
-        return self.request(route, params=params)
+        return await self.request(route, params=params)
 
-    def get_game_analytics(self, *, after=None, ended_at=None, first=None,
-                           game_id=None, started_at=None,
-                           analystics_type=None):
+    async def get_game_analytics(self, *, after=None, ended_at=None,
+                                 first=None,
+                                 game_id=None, started_at=None,
+                                 analystics_type=None):
         route = HTTPRoute('GET', '/analytics/games')
         params = {}
         if after:
@@ -247,12 +249,13 @@ class HTTPClient:
             params['started_at'] = started_at
         if analystics_type:
             params['type'] = analystics_type
-        return self.request(route, params=params)
+        return await self.request(route, params=params)
 
     # bits
 
-    def get_bits_leaderboard(self, *, count=None, period=None, started_at=None,
-                             user_id=None):
+    async def get_bits_leaderboard(self, *, count=None, period=None,
+                                   started_at=None,
+                                   user_id=None):
         route = HTTPRoute('GET', '/bits/leaderboard')
         params = {}
         if count:
@@ -263,12 +266,13 @@ class HTTPClient:
             params['started_at'] = started_at
         if user_id:
             params['user_id'] = user_id
-        return self.request(route, params=params)
+        return await self.request(route, params=params)
 
     # extensions
 
-    def get_extension_transactions(self, *, extension_id, transaction_id=None,
-                                   after=None, first=None):
+    async def get_extension_transactions(self, *, extension_id,
+                                         transaction_id=None,
+                                         after=None, first=None):
         route = HTTPRoute('GET', '/extensions/transactions')
         params = {'extension_id': extension_id}
         if transaction_id:
@@ -277,20 +281,21 @@ class HTTPClient:
             params['after'] = after
         if first:
             params['first'] = first
-        return self.request(route, params=params)
+        return await self.request(route, params=params)
 
     # clips
 
-    def create_clip(self, *, broadcaster_id, has_delay=None):
+    async def create_clip(self, *, broadcaster_id, has_delay=None):
         route = HTTPRoute('POST', '/clips')
         params = {'broadcaster_id': broadcaster_id}
         if has_delay:
             params['has_delay'] = has_delay
-        return self.request(route, params=params)
+        return await self.request(route, params=params)
 
-    def get_clips(self, broadcaster_id=None, game_id=None, clip_id=None, *,
-                  after=None, before=None, ended_at=None,
-                  first=None, started_at=None):
+    async def get_clips(self, broadcaster_id=None, game_id=None, clip_id=None,
+                        *,
+                        after=None, before=None, ended_at=None,
+                        first=None, started_at=None):
         route = HTTPRoute('GET', '/clips')
         params = {}
         if broadcaster_id:
@@ -309,29 +314,29 @@ class HTTPClient:
             params['first'] = first
         if started_at:
             params['started_at'] = started_at
-        return self.request(route, params=params)
+        return await self.request(route, params=params)
 
     # entitlements
 
-    def create_entitlement_grants_upload_url(self, *, manifest_id,
-                                             entitlement_type):
+    async def create_entitlement_grants_upload_url(self, *, manifest_id,
+                                                   entitlement_type):
         route = HTTPRoute('POST', '/entitlements/upload')
         params = {'manifest_id': manifest_id, 'type': entitlement_type}
-        return self.request(route, params=params)
+        return await self.request(route, params=params)
 
-    def get_code_status(self, *, code, user_id):
+    async def get_code_status(self, *, code, user_id):
         route = HTTPRoute('GET', '/entitlements/codes')
         params = {'code': code, 'user_id': user_id}
-        return self.request(route, params=params)
+        return await self.request(route, params=params)
 
-    def reedem_code(self, *, code, user_id):
+    async def reedem_code(self, *, code, user_id):
         route = HTTPRoute('POST', '/entitlements/code')
         params = {'code': code, 'user_id': user_id}
-        return self.request(route, params=params)
+        return await self.request(route, params=params)
 
     # games
 
-    def get_top_games(self, *, after=None, before=None, first=None):
+    async def get_top_games(self, *, after=None, before=None, first=None):
         route = HTTPRoute('GET', '/games/top')
         params = {}
         if after:
@@ -340,20 +345,20 @@ class HTTPClient:
             params['before'] = before
         if first:
             params['first'] = first
-        return self.request(route, params=params)
+        return await self.request(route, params=params)
 
-    def get_games(self, *, game_id=None, name=None):
+    async def get_games(self, *, game_id=None, name=None):
         route = HTTPRoute('GET', '/games')
         params = {}
         if game_id:
             params['id'] = game_id
         if name:
             params['name'] = name
-        return self.request(route, params=params)
+        return await self.request(route, params=params)
 
     # moderation
 
-    def check_automod_status(self, *, broadcaster_id, messages):
+    async def check_automod_status(self, *, broadcaster_id, messages):
         route = HTTPRoute('POST', '/moderation/enforcements/status')
         params = {'broadcaster_id': broadcaster_id}
         json = {}
@@ -361,10 +366,11 @@ class HTTPClient:
             {'msg_id': msg_id, 'msg_text': msg_text, 'user_id': user_id} for
             (msg_id, msg_text, user_id) in
             messages]
-        return self.request(route, params=params, json=json)
+        return await self.request(route, params=params, json=json)
 
-    def get_banned_events(self, *, broadcaster_id, user_id=None, after=None,
-                          first=None):
+    async def get_banned_events(self, *, broadcaster_id, user_id=None,
+                                after=None,
+                                first=None):
         route = HTTPRoute('GET', '/moderation/banned/events')
         params = {'broadcaster_id': broadcaster_id}
         if user_id:
@@ -373,10 +379,11 @@ class HTTPClient:
             params['after'] = after
         if first:
             params['first'] = first
-        return self.request(route, params=params)
+        return await self.request(route, params=params)
 
-    def get_banned_users(self, *, broadcaster_id, user_id=None, after=None,
-                         first=None):
+    async def get_banned_users(self, *, broadcaster_id, user_id=None,
+                               after=None,
+                               first=None):
         route = HTTPRoute('GET', '/moderation/banned')
         params = {'broadcaster_id': broadcaster_id}
         if user_id:
@@ -385,38 +392,41 @@ class HTTPClient:
             params['after'] = after
         if first:
             params['first'] = first
-        return self.request(route, params=params)
+        return await self.request(route, params=params)
 
-    def get_moderators(self, *, broadcaster_id, user_id=None, after=None):
+    async def get_moderators(self, *, broadcaster_id, user_id=None,
+                             after=None):
         route = HTTPRoute('GET', '/moderation/moderators')
         params = {'broadcaster_id': broadcaster_id}
         if user_id:
             params['user_id'] = user_id
         if after:
             params['after'] = after
-        return self.request(route, params=params)
+        return await self.request(route, params=params)
 
-    def get_moderator_events(self, *, broadcaster_id, user_id=None):
+    async def get_moderator_events(self, *, broadcaster_id, user_id=None):
         route = HTTPRoute('GET', '/moderation/moderators/events')
         params = {'broadcaster_id': broadcaster_id}
         if user_id:
             params['user_id'] = user_id
-        return self.request(route, params=params)
+        return await self.request(route, params=params)
 
     # subscriptions
 
-    def get_broadcaster_subscriptions(self, *, broadcaster_id, user_id=None):
+    async def get_broadcaster_subscriptions(self, *, broadcaster_id,
+                                            user_id=None):
         route = HTTPRoute('GET', '/subscriptions')
         params = {'broadcaster_id': broadcaster_id}
         if user_id:
             params['user_id'] = user_id
-        return self.request(route, params=params)
+        return await self.request(route, params=params)
 
     # streams
 
-    def get_streams(self, *, after=None, before=None, first=None, game_id=None,
-                    language=None, user_id=None,
-                    user_login=None):
+    async def get_streams(self, *, after=None, before=None, first=None,
+                          game_id=None,
+                          language=None, user_id=None,
+                          user_login=None):
         route = HTTPRoute('GET', '/streams')
         params = {}
         if after:
@@ -433,13 +443,14 @@ class HTTPClient:
             params['user_id'] = user_id
         if user_login:
             params['user_login'] = user_login
-        return self.request(route, params=params)
+        return await self.request(route, params=params)
 
     # stream metadata
 
-    def get_streams_metadata(self, *, after=None, before=None, first=None,
-                             game_id=None, language=None, user_id=None,
-                             user_login=None):
+    async def get_streams_metadata(self, *, after=None, before=None,
+                                   first=None,
+                                   game_id=None, language=None, user_id=None,
+                                   user_login=None):
         route = HTTPRoute('GET', '/streams/metadata')
         params = {}
         if after:
@@ -456,19 +467,20 @@ class HTTPClient:
             params['user_id'] = user_id
         if user_login:
             params['user_login'] = user_login
-        return self.request(route, params=params)
+        return await self.request(route, params=params)
 
     # stream markers
 
-    def create_stream_marker(self, *, user_id, description=None):
+    async def create_stream_marker(self, *, user_id, description=None):
         route = HTTPRoute('POST', '/streams/markers')
         json = {'user_id': user_id}
         if description:
             json['description'] = description
-        return self.request(route, json=json)
+        return await self.request(route, json=json)
 
-    def get_stream_markers(self, *, user_id, video_id, after=None, before=None,
-                           first=None):
+    async def get_stream_markers(self, *, user_id, video_id, after=None,
+                                 before=None,
+                                 first=None):
         route = HTTPRoute('GET', '/streams/markers')
         params = {'user_id': user_id, 'video_id': video_id}
         if after:
@@ -477,11 +489,12 @@ class HTTPClient:
             params['before'] = before
         if first:
             params['first'] = first
-        return self.request(route, params=params)
+        return await self.request(route, params=params)
 
     # stream tags
 
-    def get_all_stream_tags(self, *, after=None, first=None, tag_id=None):
+    async def get_all_stream_tags(self, *, after=None, first=None,
+                                  tag_id=None):
         route = HTTPRoute('GET', '/streams/tags')
         params = {}
         if after:
@@ -490,20 +503,20 @@ class HTTPClient:
             params['first'] = first
         if tag_id:
             params['tag_id'] = tag_id
-        return self.request(route, params=params)
+        return await self.request(route, params=params)
 
-    def get_stream_tags(self, *, broadcaster_id):
+    async def get_stream_tags(self, *, broadcaster_id):
         route = HTTPRoute('GET', '/streams/tags')
         params = {'broadcaster_id': broadcaster_id}
-        return self.request(route, params=params)
+        return await self.request(route, params=params)
 
-    def replace_stream_tags(self, *, broadcaster_id, tag_ids=None):
+    async def replace_stream_tags(self, *, broadcaster_id, tag_ids=None):
         route = HTTPRoute('PUT', '/streams/tags')
         params = {'broadcaster_id': broadcaster_id}
         json = {}
         if tag_ids:
             json['tag_ids'] = tag_ids
-        return self.request(route, params=params, json=json)
+        return await self.request(route, params=params, json=json)
 
     # users
 
@@ -537,8 +550,8 @@ class HTTPClient:
 
         return responses
 
-    def get_user_follows(self, *, from_id=None, to_id=None, after=None,
-                         first=None):
+    async def get_user_follows(self, *, from_id=None, to_id=None, after=None,
+                               first=None):
         route = HTTPRoute('GET', '/users/follows')
         params = {}
         if from_id:
@@ -549,29 +562,29 @@ class HTTPClient:
             params['after'] = after
         if first:
             params['first'] = first
-        return self.request(route, params=params)
+        return await self.request(route, params=params)
 
-    def update_user(self, *, description=None):
+    async def update_user(self, *, description=None):
         route = HTTPRoute('PUT', '/users')
         params = {}
         if description:
             params['description'] = description
-        return self.request(route, params=params)
+        return await self.request(route, params=params)
 
     # user extensions
 
-    def get_user_extensions(self):
-        return self.request(HTTPRoute('GET', '/users/extensions/list'))
+    async def get_user_extensions(self):
+        return await self.request(HTTPRoute('GET', '/users/extensions/list'))
 
-    def get_user_active_extensions(self, *, user_id=None):
+    async def get_user_active_extensions(self, *, user_id=None):
         route = HTTPRoute('GET', '/users/extensions')
         params = {}
         if user_id:
             params['user_id'] = user_id
-        return self.request(route, params=params)
+        return await self.request(route, params=params)
 
-    def update_user_extensions(self, *, panels=None, components=None,
-                               overlays=None):
+    async def update_user_extensions(self, *, panels=None, components=None,
+                                     overlays=None):
         route = HTTPRoute('PUT', '/users/extensions')
         json = {'data': {}}
 
@@ -596,13 +609,13 @@ class HTTPClient:
             list(enumerate(overlays))
         ]
 
-        return self.request(route, json=json)
+        return await self.request(route, json=json)
 
     # videos
 
-    def get_videos(self, *, video_id, user_id, game_id, after=None,
-                   before=None, first=None, language=None, period=None,
-                   sort=None, video_type=None):
+    async def get_videos(self, *, video_id, user_id, game_id, after=None,
+                         before=None, first=None, language=None, period=None,
+                         sort=None, video_type=None):
         route = HTTPRoute('GET', '/videos')
         params = {'id': video_id, 'user_id': user_id, 'game_id': game_id}
         if after:
@@ -619,21 +632,21 @@ class HTTPClient:
             params['sort'] = sort
         if video_type:
             params['type'] = video_type
-        return self.request(route, params=params)
+        return await self.request(route, params=params)
 
     # webhooks
 
-    def get_webhook_subscriptions(self, *, after=None, first=None):
+    async def get_webhook_subscriptions(self, *, after=None, first=None):
         route = HTTPRoute('GET', '/webhooks/subscriptions')
         params = {}
         if after:
             params['after'] = after
         if first:
             params['first'] = first
-        return self.request(route, params=params)
+        return await self.request(route, params=params)
 
-    def create_webhook(self, *, hub_callback, hub_mode, hub_topic,
-                       hub_lease_seconds=None, hub_secret=None):
+    async def create_webhook(self, *, hub_callback, hub_mode, hub_topic,
+                             hub_lease_seconds=None, hub_secret=None):
         route = HTTPRoute('POST', '/webhooks/hub')
         json = {'hub.callback': hub_callback, 'hub.mode': hub_mode,
                 'hub.topic': hub_topic}
@@ -641,4 +654,4 @@ class HTTPClient:
             json['hub.lease_seconds'] = hub_lease_seconds
         if hub_secret:
             json['hub.secret'] = hub_secret
-        return self.request(route, json=json)
+        return await self.request(route, json=json)
