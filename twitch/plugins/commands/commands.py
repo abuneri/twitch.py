@@ -151,10 +151,10 @@ class CommandParser:
                                           self.ctx)
             await self._invoke(self.command, *typed_args)
         elif param_type == Parameter.POSITIONAL_OR_KEYWORD:
-            log.info('can\'t invoke a command with less message parameters'
+            log.info('can\'t invoke a command with less message parameters '
                      'than the signature requires')
         elif param_type == Parameter.KEYWORD_ONLY:
-            log.info('can\'t build **kwargs with less message parameters than'
+            log.info('can\'t build **kwargs with less message parameters than '
                      'command signature params')
         else:
             _log_unsupported_param_kind()
