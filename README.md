@@ -13,7 +13,9 @@ design inspired by the [discord.py](https://github.com/Rapptz/discord.py/) libra
 - 100% coverage of the supported **new** Twitch API (**v5 not supported**)*
 - 100% coverage of the supported Chatbot/IRC gateway*
 - PEP 8 Compliant
-- Built in commands plugin (with optional fuzzy matching)
+- Rich built-in commands plugin featuring:
+    - Custom type registry
+    - Optional fuzzy matching on commands
 
 \* The underlying HTTP and Websocket implementations support 100%, but it may not be exposed in the client or models yet (soon:tm:)
 
@@ -66,8 +68,46 @@ bot.run('login_name', 'access_token')
 ```
 -----------
 
+#### Commands Plugin: Register Custom Types
+The commands plugin provides a method of registering custom types.
+This is allows you to define a format for your command parameters and then
+directly map them to custom types you've defined.
+```python
+from twitch.plugins.commands import Bot
+
+class Foo:
+    def __init__(self, p1, p2):
+        self.p = (p1, p2)
+
+    def stuff(self):
+        # do stuff with self.p
+        pass
+
+bot = Bot(command_prefix='@', channels=['channel_name'])
+
+@bot.register_type(Foo)
+def reg_foo(s: str):
+    s_parts = s.split(';')
+    if len(s_parts) == 2:
+        s1 = s_parts[0]
+        s2 = s_parts[1]
+        return Foo(s1, s2)
+    return None
+
+@bot.command()
+async def foo(ctx, foo_param: Foo):
+    if not foo_param:
+        return
+
+    the_stuff = foo_param.stuff()
+    # ... do things with the_stuff ...
+
+bot.run('login_name', 'access_token')
+```
+
+-----------
 #### Commands Plugin: Fuzzy Matching command
-The commands plugin also provides built in fuzzy matching. This is opt-in,
+The commands plugin provides built-in fuzzy matching. This is opt-in,
 no fuzzy matching happens by default.
 
 You can pass in a `commands.FuzzyMatch` object to your command definition. In this
