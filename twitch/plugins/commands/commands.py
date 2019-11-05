@@ -67,7 +67,9 @@ class FuzzyMatch:
 
 
 class CommandParser:
-    def __init__(self, command, pass_ctx, cmd_params, sig_params, message):
+    def __init__(self, command, registered_types, pass_ctx, cmd_params,
+                 sig_params, message):
+        self.registered_types = registered_types
         self.cmd_params = cmd_params
         self.sig_params = sig_params
         self.ctx = context.Context(message) if pass_ctx else None
@@ -134,12 +136,14 @@ class CommandParser:
             so we don't have to worry about the cases where self.sig_params
             is > 1 and we can just invoke
             """
-            typed_args = _get_invoke_args(self.cmd_params, self.sig_params,
-                                          self.ctx)
+            typed_args = self._get_invoke_args(self.cmd_params,
+                                               self.sig_params,
+                                               self.ctx)
             await self._invoke(self.command, *typed_args)
 
         elif param_type == Parameter.KEYWORD_ONLY:
-            typed_kwargs = _get_invoke_kwargs(self.cmd_params, self.sig_params)
+            typed_kwargs = self._get_invoke_kwargs(self.cmd_params,
+                                                   self.sig_params)
             await self._invoke_kwargs(self.command, self.ctx, **typed_kwargs)
 
         else:
@@ -147,8 +151,9 @@ class CommandParser:
 
     async def _invoke_less_cmd_params(self, param_type):
         if param_type == Parameter.VAR_POSITIONAL:
-            typed_args = _get_invoke_args(self.cmd_params, self.sig_params,
-                                          self.ctx)
+            typed_args = self._get_invoke_args(self.cmd_params,
+                                               self.sig_params,
+                                               self.ctx)
             await self._invoke(self.command, *typed_args)
         elif param_type == Parameter.POSITIONAL_OR_KEYWORD:
             log.info('can\'t invoke a command with less message parameters '
@@ -162,58 +167,62 @@ class CommandParser:
     async def _invoke_equal_params(self, param_type):
         if param_type == Parameter.VAR_POSITIONAL \
                 or param_type == Parameter.POSITIONAL_OR_KEYWORD:
-            typed_args = _get_invoke_args(self.cmd_params, self.sig_params,
-                                          self.ctx)
+            typed_args = self._get_invoke_args(self.cmd_params,
+                                               self.sig_params,
+                                               self.ctx)
             await self._invoke(self.command, *typed_args)
 
         elif param_type == Parameter.KEYWORD_ONLY:
-            typed_kwargs = _get_invoke_kwargs(self.cmd_params, self.sig_params)
+            typed_kwargs = self._get_invoke_kwargs(self.cmd_params,
+                                                   self.sig_params)
             await self._invoke_kwargs(self.command, self.ctx, **typed_kwargs)
         else:
             _log_unsupported_param_kind()
 
+    def _convert_to_annotation(self, sig_param, cmd_param):
+        """
+        Attempt to convert the parameter to the type of the signature parameter.
+        The three builtin types supported are: str, int, and float, or one
+        of the registered types
 
-def _convert_to_annotation(sig_param, cmd_param):
-    """
-    Attempt to convert the parameter to the type of the signature parameter.
-    The three builtin types supported are: str, int, and float
-
-    :param sig_param:
-    :param cmd_param:
-    :return:
-    """
-    try:
+        :param sig_param:
+        :param cmd_param:
+        :return:
+        """
         annotation = sig_param.annotation
-        if str == annotation:
-            return cmd_param
-        elif int == annotation:
-            return int(cmd_param)
-        elif float == annotation:
-            return float(cmd_param)
-        else:
-            # TODO: ? allow registry of custom types and
-            #  auto build based on *args/**kwargs ?
-            return cmd_param
-    except Exception as e:
-        log.info(f'unable to convert parameter "{cmd_param}" to type '
-                 f'{annotation}: str(e)')
-        raise e
+        try:
+            if str == annotation:
+                return cmd_param
+            elif int == annotation:
+                return int(cmd_param)
+            elif float == annotation:
+                return float(cmd_param)
+            elif sig_param.annotation in self.registered_types.keys():
+                return self.registered_types[sig_param.annotation](cmd_param)
+            else:
+                raise TypeError(
+                    f'the parameter {sig_param.name} was unable '
+                    f'to be converted to a valid type for the '
+                    f'command {self.command.__name__}')
+        except Exception as e:
+            log.info(f'unable to convert parameter "{cmd_param}" to type '
+                     f'{annotation}: {str(e)}')
+            raise e
 
+    def _get_invoke_args(self, cmd_params, sig_params, ctx):
+        args = [arg for _, arg in
+                zip(sig_params, cmd_params)]
+        typed_args = [self._convert_to_annotation(param, arg) for param, arg in
+                      zip(sig_params, args)]
+        if ctx:
+            typed_args.insert(0, ctx)
+        return typed_args
 
-def _get_invoke_args(cmd_params, sig_params, ctx):
-    args = [arg for _, arg in zip(sig_params, cmd_params)]
-    typed_args = [_convert_to_annotation(param, arg) for param, arg in
-                  zip(sig_params, args)]
-    if ctx:
-        typed_args.insert(0, ctx)
-    return typed_args
-
-
-def _get_invoke_kwargs(cmd_params, sig_params):
-    kwargs = {}
-    for k, v in zip(sig_params, cmd_params):
-        kwargs[k.name] = _convert_to_annotation(k, v)
-    return kwargs
+    def _get_invoke_kwargs(self, cmd_params, sig_params):
+        typed_kwargs = {}
+        for k, v in zip(sig_params, cmd_params):
+            typed_kwargs[k.name] = self._convert_to_annotation(k, v)
+        return typed_kwargs
 
 
 def _log_unsupported_param_kind():
