@@ -91,8 +91,8 @@ async def on_connected(user):
     await bot.join_channel('channel_name')
 
 @bot.command(fuzzy_match=fuzzy)
-async def headcount(ctx):
-    await ctx.send('matched')
+async def headcount(ctx, val: int):
+    await ctx.send(f'matched, double the user\'s value is {val * 2}')
 
 bot.run('login_name', 'access_token')
 ```
