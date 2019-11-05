@@ -48,6 +48,8 @@ class Bot(twitch.Client):
         return decorator(self)
 
     async def join_channels(self, user):
+        if not self.channels:
+            return
         for channel in self.channels:
             log.info(f'attemping to join {channel}s channel...')
             await self.join_channel(channel)
