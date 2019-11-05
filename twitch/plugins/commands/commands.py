@@ -181,9 +181,9 @@ class CommandParser:
 
     def _convert_to_annotation(self, sig_param, cmd_param):
         """
-        Attempt to convert the parameter to the type of the signature parameter.
-        The three builtin types supported are: str, int, and float, or one
-        of the registered types
+        Attempt to convert the parameter to the type of the signature
+        parameter. The three builtin types supported are: str, int, and float,
+        or any of the user-defined registered types.
 
         :param sig_param:
         :param cmd_param:
