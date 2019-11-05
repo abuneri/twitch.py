@@ -182,17 +182,22 @@ def _convert_to_annotation(sig_param, cmd_param):
     :param cmd_param:
     :return:
     """
-    annotation = sig_param.annotation
-    if str == annotation:
-        return cmd_param
-    elif int == annotation:
-        return int(cmd_param)
-    elif float == annotation:
-        return float(cmd_param)
-    else:
-        # TODO: ? allow registry of custom types and
-        #  auto build based on *args/**kwargs ?
-        return cmd_param
+    try:
+        annotation = sig_param.annotation
+        if str == annotation:
+            return cmd_param
+        elif int == annotation:
+            return int(cmd_param)
+        elif float == annotation:
+            return float(cmd_param)
+        else:
+            # TODO: ? allow registry of custom types and
+            #  auto build based on *args/**kwargs ?
+            return cmd_param
+    except Exception as e:
+        log.info(f'unable to convert parameter "{cmd_param}" to type '
+                 f'{annotation}: str(e)')
+        raise e
 
 
 def _get_invoke_args(cmd_params, sig_params, ctx):
