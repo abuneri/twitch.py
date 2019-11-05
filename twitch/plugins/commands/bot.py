@@ -16,9 +16,15 @@ class Bot(twitch.Client):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.command_prefix = kwargs.get('command_prefix', '!')
+        self.channels = kwargs.get('channels', None)
         self._commands = {}
+
+        # auto register some MESSAGE events for command parser
         process_commands = partial(self.process_commands, _ctor=True)
         self.event_handler.register(twitch.Event.MESSAGE, process_commands)
+
+        # auto register CONNECTED events for auto-joining channels
+        self.event_handler.register(twitch.Event.CONNECTED, self.join_channels)
 
     def command(self, **kwargs):
         def decorator(bot):
@@ -40,6 +46,11 @@ class Bot(twitch.Client):
 
             return wrapper
         return decorator(self)
+
+    async def join_channels(self, user):
+        for channel in self.channels:
+            log.info(f'attemping to join {channel}s channel...')
+            await self.join_channel(channel)
 
     async def process_commands(self, message, _ctor=False):
         if not _ctor:
