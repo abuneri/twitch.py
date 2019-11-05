@@ -50,18 +50,16 @@ class EventHandler:
                 f'must be a coroutine function to be registered')
 
         event = f'on_{event}' if not event.startswith('on_') else event
-        if event == f'on_{Event.MESSAGE}':
-            def get_name(coro):
-                return coro.func.__name__ if isinstance(coro, partial) else \
-                    coro.__name__
 
-            coros = getattr(self, event, [])
-            # ensure the same on_message coro can't be registered twice
-            if coro_name not in [get_name(c) for c in coros]:
-                coros.append(coro)
-            setattr(self, event, coros)
-        else:
-            setattr(self, event, coro)
+        def get_name(coro):
+            return coro.func.__name__ if isinstance(coro, partial) else \
+                coro.__name__
+
+        coros = getattr(self, event, [])
+        # ensure the same on_message coro can't be registered twice
+        if coro_name not in [get_name(c) for c in coros]:
+            coros.append(coro)
+        setattr(self, event, coros)
 
     def emit(self, event, *args, **kwargs):
         handler = self._handlers.get(event)
@@ -102,12 +100,8 @@ class EventHandler:
                     del listeners[idx]
 
         try:
-            if method == f'on_{Event.MESSAGE}':
-                on_message_coros = getattr(self, method)
-                self._schedule_event(on_message_coros, method, *args, **kwargs)
-            else:
-                coro = getattr(self, method)
-                self._schedule_event([coro], method, *args, **kwargs)
+            coros = getattr(self, method)
+            self._schedule_event(coros, method, *args, **kwargs)
         except AttributeError:
             pass
 
