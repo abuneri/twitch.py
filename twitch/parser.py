@@ -259,12 +259,10 @@ def _parse_tags(tags_msg):
     if not tags_msg:
         return None
 
-    tag_parts = split_skip_empty_parts(tags_msg, TAG_SEPARATOR)
+    tag_parts = [tag_part.split('=') for tag_part in
+                 split_skip_empty_parts(tags_msg, TAG_SEPARATOR)]
 
-    def extract_kv(tag):
-        return tag[0], tag[1]
-
-    tags_dict = {extract_kv(tag) for tag in tag_parts if len(tag) == 2}
+    tags_dict = {kv[0]: kv[1] for kv in tag_parts if len(kv) == 2}
     return tags_dict
 
 
