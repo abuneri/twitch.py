@@ -13,7 +13,7 @@ design inspired by the [discord.py](https://github.com/Rapptz/discord.py/) libra
 - 100% coverage of the supported **new** Twitch API (**v5 not supported**)*
 - 100% coverage of the supported Chatbot/IRC gateway*
 - PEP 8 Compliant
-- Built in commands plugin
+- Built in commands plugin (with optional fuzzy matching)
 
 \* The underlying HTTP and Websocket implementations support 100%, but it may not be exposed in the client or models yet (soon:tm:)
 
