@@ -4,6 +4,7 @@ import logging
 import datetime
 from multidict import MultiDict
 from weakref import WeakValueDictionary
+from itertools import zip_longest
 
 import aiohttp
 
@@ -506,16 +507,35 @@ class HTTPClient:
 
     # users
 
-    def get_users(self, *, user_ids=None, logins=None):
+    async def get_users(self, *, user_ids=None, logins=None):
         route = HTTPRoute('GET', '/users')
-        params = MultiDict()
+
+        all_users_ids = []
+        all_logins_ids = []
         if user_ids:
-            for user_id in user_ids:
-                params.add('id', user_id)
+            u = user_ids[100:]
+            while u:
+                all_users_ids.append(u[:100])
+                u = u[100:]
         if logins:
-            for login in logins:
-                params.add('login', login)
-        return self.request(route, params=params)
+            lo = logins[100:]
+            while lo:
+                all_logins_ids.append(lo[:100])
+                lo = lo[100:]
+
+        responses = []
+        requests = zip_longest(all_users_ids, all_logins_ids)
+        for u, log in requests:
+            params = MultiDict()
+            if u:
+                for user_id in u:
+                    params.add('id', user_id)
+            if log:
+                for login in log:
+                    params.add('login', login)
+            responses.append(await self.request(route, params=params))
+
+        return responses
 
     def get_user_follows(self, *, from_id=None, to_id=None, after=None,
                          first=None):
