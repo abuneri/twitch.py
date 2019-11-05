@@ -18,6 +18,7 @@ class Bot(twitch.Client):
         self.command_prefix = kwargs.get('command_prefix', '!')
         self.channels = kwargs.get('channels', None)
         self._commands = {}
+        self._registered_types = {}
 
         # auto register some MESSAGE events for command parser
         process_commands = partial(self.process_commands, _ctor=True)
@@ -44,6 +45,36 @@ class Bot(twitch.Client):
                 else:
                     bot._commands[command_name] = (coro, pass_ctx, fuzzy_match)
 
+            return wrapper
+        return decorator(self)
+
+    def register_type(self, type):
+        def decorator(bot):
+            def wrapper(func):
+                if asyncio.iscoroutinefunction(func):
+                    raise TypeError(
+                        'type conversion registered should not be a coroutine')
+                if not type:
+                    raise TypeError(
+                        'type trying to be registered is not valid')
+
+                if type in bot._registered_types.keys():
+                    raise ValueError(f'the type {type} is already registered')
+
+                conversion_params = list(signature(func).parameters.values())
+                num_params = len(conversion_params)
+                if num_params > 1 or num_params < 1:
+                    raise TypeError('your conversion function should only '
+                                    'have one parameter. the parameter '
+                                    'should be the string you are '
+                                    'converting to the custom type')
+                param = conversion_params[0]
+                if param.annotation != str:
+                    raise TypeError(
+                        f'the conversion parameter {param.name} must be a str')
+
+                # type successfully registered
+                bot._registered_types[type] = func
             return wrapper
         return decorator(self)
 
@@ -96,7 +127,8 @@ class Bot(twitch.Client):
     async def _invoke_command(self, command, pass_ctx, params, message):
         sig = signature(command)
         sig_params = list(sig.parameters.values())
-        command_parser = CommandParser(command, pass_ctx, params,
+        command_parser = CommandParser(command, self._registered_types,
+                                       pass_ctx, params,
                                        sig_params, message)
         await command_parser.invoke()
 
