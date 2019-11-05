@@ -101,7 +101,10 @@ class WebSocketClient(websockets.client.WebSocketClientProtocol):
         self._emit(Event.PONGED)
 
     async def send_join(self, channel_name):
-        msg = f'{OpCode.JOIN} {CHANNEL_PREFIX}{channel_name}'
+        channel_name = channel_name if channel_name.startswith(
+            CHANNEL_PREFIX) else CHANNEL_PREFIX + channel_name
+        channel_name = channel_name.lower()
+        msg = f'{OpCode.JOIN} {channel_name}'
         await self.send(msg)
 
     async def send_message(self, channel_name, message):
