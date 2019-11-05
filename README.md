@@ -18,7 +18,8 @@ design inspired by the [discord.py](https://github.com/Rapptz/discord.py/) libra
 \* The underlying HTTP and Websocket implementations support 100%, but it may not be exposed in the client or models yet (soon:tm:)
 
 ## Simple Examples
-#### Echoing a streamers chat
+A glimpse into the library to get you started!
+#### Base Client: Echoing a streamers chat
 ```python
 import twitch
 
@@ -47,8 +48,10 @@ async def message_listener(message):
 
 client.run('login_name', 'access_token')
 ```
+-----------
 
 #### Commands Plugin: Ping-Pong
+The commands plugin makes it possible to get a ping-pong bot running **under 10 lines of actual code!!**
 ```python
 from twitch.plugins.commands import Bot
 
@@ -65,7 +68,35 @@ async def ping(ctx):
 
 bot.run('login_name', 'access_token')
 ```
+-----------
 
+#### Commands Plugin: Fuzzy Matching command
+The commands plugin also provides built in fuzzy matching. This is opt-in,
+no fuzzy matching happens by default.
+
+You can pass in a `commands.FuzzyMatch` object to your command definition. In this
+example, we are using the simple ratio algorithm with a threshold of 85.
+
+This means if a user types `?meadcount`, if it matches `headcount` by >= 85,
+the command will still get invoked.
+```python
+from twitch.plugins.commands import Bot, FuzzyMatch, FuzzyRatio
+
+bot = Bot(command_prefix='?')
+
+fuzzy = FuzzyMatch(ratio=FuzzyRatio.SIMPLE, threshold=85)
+
+@bot.event()
+async def on_connected(user):
+    await bot.join_channel('channel_name')
+
+@bot.command(fuzzy_match=fuzzy)
+async def headcount(ctx):
+    await ctx.send('matched')
+
+bot.run('login_name', 'access_token')
+```
+-----------
 
 ``login_name``:
 - The account name of your bot
