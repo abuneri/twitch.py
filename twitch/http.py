@@ -526,14 +526,14 @@ class HTTPClient:
         all_users_ids = []
         all_logins_ids = []
         if user_ids:
-            u = user_ids[100:]
+            u = user_ids[:100]
             while u:
-                all_users_ids.append(u[:100])
+                all_users_ids.append(u)
                 u = u[100:]
         if logins:
-            lo = logins[100:]
+            lo = logins[:100]
             while lo:
-                all_logins_ids.append(lo[:100])
+                all_logins_ids.append(lo)
                 lo = lo[100:]
 
         responses = []
