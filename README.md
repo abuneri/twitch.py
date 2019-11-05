@@ -55,11 +55,7 @@ The commands plugin makes it possible to get a ping-pong bot running **under 10 
 ```python
 from twitch.plugins.commands import Bot
 
-bot = Bot(command_prefix='>')
-
-@bot.event()
-async def on_connected(user):
-    await bot.join_channel('channel_name')
+bot = Bot(command_prefix='>', channels=['channel_name'])
 
 
 @bot.command()
@@ -82,13 +78,10 @@ the command will still get invoked.
 ```python
 from twitch.plugins.commands import Bot, FuzzyMatch, FuzzyRatio
 
-bot = Bot(command_prefix='?')
+bot = Bot(command_prefix='?', channels=['channel_name'])
 
 fuzzy = FuzzyMatch(ratio=FuzzyRatio.SIMPLE, threshold=85)
 
-@bot.event()
-async def on_connected(user):
-    await bot.join_channel('channel_name')
 
 @bot.command(fuzzy_match=fuzzy)
 async def headcount(ctx, val: int):
