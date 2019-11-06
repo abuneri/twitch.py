@@ -175,6 +175,20 @@ class SingleLineMessageParser(MessageParserHandler, IMessageParser):
                         else:
                             self.emit(Event.CHAT_CLEARED, channel)
 
+                elif opcode == OpCode.CLEARMSG:
+                    try:
+                        username = tags_dict[Tags.LOGIN]
+                        content = _get_args(msg_dict)[0]
+
+                        user = await self._ws._session.get_user(login=username)
+                        message = Message(content, user, content,
+                                          session=self._ws._session,
+                                          tags_data=tags_dict)
+                        self.emit(Event.MESSAGE_CLEARED, message)
+                    except (KeyError, IndexError):
+                        # meh
+                        pass
+
                 elif opcode == OpCode.JOIN:
                     self.emit(Event.USER_JOIN_CHANNEL, user, channel_name)
 

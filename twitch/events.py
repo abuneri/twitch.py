@@ -61,6 +61,7 @@ class Event:
     LIST_USERS = 'list_users'
     MOD_STATUS_CHANGED = 'mod_status_updated'
     CHAT_CLEARED = 'chat_cleared'
+    MESSAGE_CLEARED = 'message_cleared'
     USER_BANNED = 'user_banned'
     USER_PERMANENT_BANNED = 'user_permanent_banned'
     MESSAGE_CLEARED = 'message_cleared'
