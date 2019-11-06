@@ -198,19 +198,18 @@ class MsgIdTags:
     WHISPER_RESTRICTED_RECIPIENT = 'whisper_restricted_recipient'
 
 
-class BadgeType(enum.Enum):
-    ADMIN = 0
-    BITS = 1
-    BROADCASTER = 2
-    GLOBAL_MOD = 3
-    MODERATOR = 4
-    SUBSCRIBER = 5
-    STAFF = 6
-    TURBO = 7
-    PRIME = 8
-
-
 class Badge:
+    class Type(enum.Enum):
+        ADMIN = 0
+        BITS = 1
+        BROADCASTER = 2
+        GLOBAL_MOD = 3
+        MODERATOR = 4
+        SUBSCRIBER = 5
+        STAFF = 6
+        TURBO = 7
+        PRIME = 8
+
     def __init__(self, badge, info):
         badge_parts = badge.split('/')
         if len(badge_parts) != 2:
@@ -218,7 +217,7 @@ class Badge:
         self._type = Badge._to_type(badge_parts[0])
         self._version = int(badge_parts[1])
         self._subscriber_months = int(
-            info) if self._type == BadgeType.SUBSCRIBER and info else None
+            info) if self._type == Badge.Type.SUBSCRIBER and info else None
 
     @property
     def type(self):
@@ -235,23 +234,23 @@ class Badge:
     @staticmethod
     def _to_type(badge_type):
         if badge_type == 'admin':
-            return BadgeType.ADMIN
+            return Badge.Type.ADMIN
         elif badge_type == 'bits':
-            return BadgeType.BITS
+            return Badge.Type.BITS
         elif badge_type == 'broadcaster':
-            return BadgeType.BROADCASTER
+            return Badge.Type.BROADCASTER
         elif badge_type == 'global_mod':
-            return BadgeType.GLOBAL_MOD
+            return Badge.Type.GLOBAL_MOD
         elif badge_type == 'moderator':
-            return BadgeType.MODERATOR
+            return Badge.Type.MODERATOR
         elif badge_type == 'subscriber':
-            return BadgeType.SUBSCRIBER
+            return Badge.Type.SUBSCRIBER
         elif badge_type == 'staff':
-            return BadgeType.STAFF
+            return Badge.Type.STAFF
         elif badge_type == 'turbo':
-            return BadgeType.TURBO
+            return Badge.Type.TURBO
         elif badge_type == 'premium':
-            return BadgeType.PRIME
+            return Badge.Type.PRIME
         else:
             raise ValueError(f'badge type {badge_type} is not supported')
 
@@ -288,3 +287,31 @@ class Color:
     @property
     def hex(self):
         return self._hex
+
+
+class Emote:
+    BASE_CDN_URL = 'http://static-cdn.jtvnw.net/emoticons/v1'
+
+    class Size:
+        SMALL = 1.0
+        MEDIUM = 2.0
+        LARGE = 3.0
+
+    def __init__(self, emote):
+        emote_parts = emote.split(':')
+        if len(emote_parts) != 2:
+            raise ValueError(f'invalid emote format: {emote}')
+        self._id = emote_parts[0]
+        # TODO: think of something else useful to expose with this data in
+        #   the context of a message
+        index_parts = emote_parts[1].split(',')
+        self._indexes = [tuple(index.split('-')) for index in index_parts]
+
+    @property
+    def occurances(self):
+        return len(self._indexes)
+
+    @property
+    def url(self, size=None):
+        size = size if size else Emote.Size.SMALL
+        return f'{Emote.BASE_CDN_URL}/{self._id}/{size}'
