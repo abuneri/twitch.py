@@ -212,13 +212,14 @@ class Badge:
         PRIME = 8
 
     def __init__(self, badge, info):
+        info_parts = info.split('/')
         badge_parts = badge.split('/')
         if len(badge_parts) != 2:
             raise ValueError(f'badge {badge} is not in the correct format')
         self._type = Badge._to_type(badge_parts[0])
         self._version = int(badge_parts[1])
-        self._subscriber_months = int(
-            info) if self._type == Badge.Type.SUBSCRIBER and info else None
+        self._subscriber_months = int(info_parts[1]) if \
+            self._type == Badge.Type.SUBSCRIBER and info else None
 
     @property
     def type(self):
