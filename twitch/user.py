@@ -1,4 +1,6 @@
 import enum
+from .tags import Tags
+from .color import Color
 
 
 class Broadcaster(enum.Enum):
@@ -28,6 +30,8 @@ class User:
         self._user_type = User._to_type(json.get('type'))
         self._view_count = json.get('view_count')
         self._session = session
+        # below are properties only set by tags
+        self._color = None
 
     @property
     def broadcaster(self):
@@ -43,7 +47,7 @@ class User:
 
     @property
     def email(self):
-        return self.email
+        return self._email
 
     @property
     def id(self):
@@ -69,6 +73,10 @@ class User:
     def view_count(self):
         return self._view_count
 
+    @property
+    def color(self):
+        return self._color
+
     @staticmethod
     def _to_broadcaster(broadcaster_type):
         if broadcaster_type == 'partner':
@@ -88,3 +96,9 @@ class User:
             return UserType.GLOBAL_MOD
         else:
             return UserType.REGULAR
+
+    @classmethod
+    def parse_tags(cls, user, tags_dict):
+        color = tags_dict.get(Tags.COLOR)
+        if color:
+            user._color = Color(color)
