@@ -1,6 +1,5 @@
 import enum
-from .tags import Tags
-from .color import Color
+from .tags import Tags, Color
 
 
 class Broadcaster(enum.Enum):

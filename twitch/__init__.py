@@ -18,5 +18,5 @@ from .capability import CapabilityConfig
 from .user import User
 from .message import Message
 from .channel import Channel
-from .color import Color
 from .events import Event
+from .tags import Color
