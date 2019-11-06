@@ -227,9 +227,10 @@ def _parse_whole_msg(msg, have_tags):
     tags_dict = None
     if have_tags:
         tags_msg = msg.lstrip(TAG_IDENTIFIER)
-        tags_msg = tags_msg.split(':', 1)[0]
+        tags_msg = tags_msg.split(' ', 1)[0]
         tags_dict = _parse_tags(tags_msg)
-    remaining_msg = ':' + msg.split(':', 1)[-1]
+    non_tags_msg = msg.split(' ', 1)
+    remaining_msg = ' '.join(non_tags_msg) if not have_tags else non_tags_msg[1]
     return tags_dict, remaining_msg
 
 
