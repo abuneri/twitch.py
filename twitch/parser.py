@@ -1,4 +1,5 @@
 import abc
+from datetime import timedelta
 
 from .opcodes import OpCode
 from .events import Event
@@ -142,21 +143,37 @@ class SingleLineMessageParser(MessageParserHandler, IMessageParser):
                 username = msg_dict['username']
 
                 user = await self._ws._session.get_user(login=username)
+                if user:
+                    user.add_tags_data(tags_dict)
+                channel = Channel(channel_name,
+                                  session=self._ws._session,
+                                  tags_data=tags_dict)
 
                 if opcode == OpCode.PRIVMSG:
-                    user.add_tags_data(tags_dict)
                     content = _get_args(msg_dict)
                     if content:
                         text = ' '.join(content).lstrip(':')
-                        channel = Channel(channel_name,
-                                          session=self._ws._session,
-                                          tags_data=tags_dict)
-
                         message = Message(text, user, channel,
                                           session=self._ws._session,
                                           tags_data=tags_dict)
-
                         self.emit(Event.MESSAGE, message)
+
+                elif opcode == OpCode.CLEARCHAT:
+                    banned_user = _get_args(msg_dict)
+                    if banned_user:
+                        banned_user = banned_user[0].lstrip(':')
+                        banned_user = await self._ws._session.get_user(
+                            login=banned_user)
+
+                    if Tags.BAN_DURATION in tags_dict:
+                        delta = timedelta(
+                            seconds=int(tags_dict[Tags.BAN_DURATION]))
+                        self.emit(Event.USER_BANNED, banned_user, delta)
+                    else:
+                        if banned_user:
+                            self.emit(Event.USER_PERMANENT_BANNED, banned_user)
+                        else:
+                            self.emit(Event.CHAT_CLEARED, channel)
 
                 elif opcode == OpCode.JOIN:
                     self.emit(Event.USER_JOIN_CHANNEL, user, channel_name)
@@ -214,10 +231,10 @@ class MultiLineMessageParser(MessageParserHandler, IMessageParser):
                             final_line_parts) == 8 else None
 
                         if channel_name:
-                            channel = Channel(channel_name,
-                                              session=self._ws._session,
-                                              tags_data=
-                                              self._sl_parser.tags_data)
+                            channel = \
+                                Channel(channel_name,
+                                        session=self._ws._session,
+                                        tags_data=self._sl_parser.tags_data)
 
             if usernames and channel:
                 users = await self._ws._session.get_users(logins=usernames)
@@ -244,7 +261,8 @@ def _parse_whole_msg(msg, have_tags):
         tags_msg = tags_msg.split(' ', 1)[0]
         tags_dict = _parse_tags(tags_msg)
     non_tags_msg = msg.split(' ', 1)
-    remaining_msg = ' '.join(non_tags_msg) if not have_tags else non_tags_msg[1]
+    remaining_msg = ' '.join(non_tags_msg) if not have_tags else non_tags_msg[
+        1]
     return tags_dict, remaining_msg
 
 
