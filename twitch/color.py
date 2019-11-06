@@ -19,7 +19,7 @@ class Color:
     def red(self):
         return self._red
 
-    @ property
+    @property
     def green(self):
         return self._green
 
