@@ -6,6 +6,7 @@ from .exception import WebSocketLoginFailure
 from .utils import split_skip_empty_parts
 from .message import Message
 from .channel import Channel
+from .user import User
 from.capability import Capability, CapabilityConfig
 
 LF = '\n'
@@ -134,6 +135,7 @@ class SingleLineMessageParser(MessageParserHandler, IMessageParser):
                 user = await self._ws._session.get_user(login=username)
 
                 if opcode == OpCode.PRIVMSG:
+                    User.parse_tags(user, tags_dict)
                     text = _get_args(msg_dict)
                     if text:
                         text = ' '.join(text).lstrip(':')
