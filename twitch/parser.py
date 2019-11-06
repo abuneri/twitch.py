@@ -88,7 +88,6 @@ class SingleLineMessageParser(MessageParserHandler, IMessageParser):
 
         have_tags = msg.startswith(TAG_IDENTIFIER)
         tags_dict, remaining_msg = _parse_whole_msg(msg, have_tags)
-        raw_msg = msg
         msg = remaining_msg
 
         self._tags_data = tags_dict
