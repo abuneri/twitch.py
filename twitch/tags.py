@@ -1,3 +1,5 @@
+import enum
+
 
 class Tags:
     BADGE_INFO = 'badge-info'
@@ -21,40 +23,6 @@ class Tags:
     SYSTEM_MSG = 'system-msg'
     TMI_SENT_TS = 'tmi-sent-ts'
     USER_ID = 'user-id'
-
-
-class Color:
-    def __init__(self, hex_rgb):
-        self._red = None
-        self._green = None
-        self._blue = None
-        self._hex = hex_rgb
-        hex_rgb = hex_rgb.lstrip('#') if hex_rgb.startswith('#') else hex_rgb
-
-        hex_parts = list(hex_rgb)
-        parts_itr = iter(hex_parts)
-        hex_components = [hex + next(parts_itr) for hex in parts_itr]
-        if len(hex_components) != 3:
-            raise ValueError(f'invalid hexadecimal color code {hex_rgb}')
-        self._red = int(hex_components[0], 16)
-        self._green = int(hex_components[1], 16)
-        self._blue = int(hex_components[2], 16)
-
-    @property
-    def red(self):
-        return self._red
-
-    @property
-    def green(self):
-        return self._green
-
-    @property
-    def blue(self):
-        return self._blue
-
-    @property
-    def hex(self):
-        return self._hex
 
 
 class MsgParamTags:
@@ -228,3 +196,92 @@ class MsgIdTags:
     WHISPER_LIMIT_PER_SEC = 'whisper_limit_per_sec'
     WHISPER_RESTRICTED = 'whisper_restricted'
     WHISPER_RESTRICTED_RECIPIENT = 'whisper_restricted_recipient'
+
+
+class BadgeType(enum.Enum):
+    ADMIN = 0
+    BITS = 1
+    BROADCASTER = 2
+    GLOBAL_MOD = 3
+    MODERATOR = 4
+    SUBSCRIBER = 5
+    STAFF = 6
+    TURBO = 7
+
+
+class Badge:
+    def __init__(self, badge, info):
+        badge_parts = badge.split('/')
+        if len(badge_parts) != 2:
+            raise ValueError(f'badge {badge} is not in the correct format')
+        self._type = Badge._to_type(badge_parts[0])
+        self._version = int(badge_parts[1])
+        self._subscriber_months = int(
+            info) if self._type == BadgeType.SUBSCRIBER and info else None
+
+    @property
+    def type(self):
+        return self._type
+
+    @property
+    def version(self):
+        return self._version
+
+    @property
+    def subscriber_months(self):
+        return self._subscriber_months
+
+    @staticmethod
+    def _to_type(badge_type):
+        if badge_type == 'admin':
+            return BadgeType.ADMIN
+        elif badge_type == 'bits':
+            return BadgeType.BITS
+        elif badge_type == 'broadcaster':
+            return BadgeType.BROADCASTER
+        elif badge_type == 'global_mod':
+            return BadgeType.GLOBAL_MOD
+        elif badge_type == 'moderator':
+            return BadgeType.MODERATOR
+        elif badge_type == 'subscriber':
+            return BadgeType.SUBSCRIBER
+        elif badge_type == 'staff':
+            return BadgeType.STAFF
+        elif badge_type == 'turbo':
+            return BadgeType.TURBO
+        else:
+            raise ValueError(f'badge type {badge_type} is not supported')
+
+
+class Color:
+    def __init__(self, hex_rgb):
+        self._red = None
+        self._green = None
+        self._blue = None
+        self._hex = hex_rgb
+        hex_rgb = hex_rgb.lstrip('#') if hex_rgb.startswith('#') else hex_rgb
+
+        hex_parts = list(hex_rgb)
+        parts_itr = iter(hex_parts)
+        hex_components = [hex + next(parts_itr) for hex in parts_itr]
+        if len(hex_components) != 3:
+            raise ValueError(f'invalid hexadecimal color code {hex_rgb}')
+        self._red = int(hex_components[0], 16)
+        self._green = int(hex_components[1], 16)
+        self._blue = int(hex_components[2], 16)
+
+    @property
+    def red(self):
+        return self._red
+
+    @property
+    def green(self):
+        return self._green
+
+    @property
+    def blue(self):
+        return self._blue
+
+    @property
+    def hex(self):
+        return self._hex

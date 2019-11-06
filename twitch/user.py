@@ -1,5 +1,5 @@
 import enum
-from .tags import Tags, Color
+from .tags import Tags, Badge, Color
 
 
 class Broadcaster(enum.Enum):
@@ -31,6 +31,7 @@ class User:
         self._session = session
         # below are properties only set by tags
         self._color = None
+        self._badges = None
 
     @property
     def broadcaster(self):
@@ -76,6 +77,10 @@ class User:
     def color(self):
         return self._color
 
+    @property
+    def badges(self):
+        return self._badges
+
     @staticmethod
     def _to_broadcaster(broadcaster_type):
         if broadcaster_type == 'partner':
@@ -98,6 +103,17 @@ class User:
 
     @classmethod
     def parse_tags(cls, user, tags_dict):
+        # badges
+        bad_info = tags_dict.get(Tags.BADGE_INFO)
+        badges_str = tags_dict.get(Tags.BADGES)
+        badges = [Badge(badge, bad_info) for badge in badges_str.split(',') if
+                  badges_str]
+
+        user._badges = badges
+
+        # bits
+
+        # color
         color = tags_dict.get(Tags.COLOR)
         if color:
             user._color = Color(color)
