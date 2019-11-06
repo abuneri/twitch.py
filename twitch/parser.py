@@ -79,6 +79,10 @@ class SingleLineMessageParser(MessageParserHandler, IMessageParser):
     async def parse(self, msg):
         self._message_handled = False
 
+        have_tags = msg.startswith(TAG_IDENTIFIER)
+        tags_dict, remaining_msg = _parse_whole_msg(msg, have_tags)
+        msg = remaining_msg
+
         if OpCode.PING in msg:
             self.emit(Event.PINGED)
             await self._ws.send_pong()
@@ -121,14 +125,6 @@ class SingleLineMessageParser(MessageParserHandler, IMessageParser):
             msg_parts = split_skip_empty_parts(msg)
             if not msg_parts:
                 return
-
-            have_tags = msg_parts[0].startswith(TAG_IDENTIFIER)
-            tags_msg = msg_parts.pop(0) if have_tags else None
-            if tags_msg:
-                tags_msg = tags_msg.lstrip(TAG_IDENTIFIER)
-            tags_dict = _parse_tags(tags_msg)
-            # TODO: move this to the first thing done in parsing a message.
-            # Almost every opcode can have tags so
 
             msg_dict = _parse_msg(msg_parts)
             if msg_dict:
@@ -223,6 +219,16 @@ def _get_args(msg_dict):
     if 'args' in msg_dict:
         return msg_dict['args']
     return None
+
+
+def _parse_whole_msg(msg, have_tags):
+    tags_dict = None
+    if have_tags:
+        tags_msg = msg.lstrip(TAG_IDENTIFIER)
+        tags_msg = tags_msg.split(':', 1)[0]
+        tags_dict = _parse_tags(tags_msg)
+    remaining_msg = ':' + msg.split(':', 1)[-1]
+    return tags_dict, remaining_msg
 
 
 def _parse_msg(msg_parts):
