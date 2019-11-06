@@ -31,18 +31,17 @@ class Client:
     # event management #
     # ================ #
 
-    def event(self, **kwargs):
+    def event(self, name):
         def decorator(client):
             def wrapper(coro):
-                event_name = kwargs.get('name')
                 if not asyncio.iscoroutinefunction(coro):
                     raise TypeError(
                         f'{coro.__name__} '
                         f'must be a coroutine function to be registered')
 
-                real_name = event_name if event_name else coro.__name__
+                real_name = name if name else coro.__name__
                 alias = f' (with the alias ' \
-                        f'{coro.__name__})' if event_name else ''
+                        f'{coro.__name__})' if name else ''
 
                 if real_name.startswith('_'):
                     raise ValueError(

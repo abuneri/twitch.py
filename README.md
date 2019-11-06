@@ -30,7 +30,7 @@ client = twitch.Client()
 AN_AWESOME_STREAMER = '<streamer>'
 
 
-@client.event()
+@client.event(twitch.Event.CONNECTED)
 async def on_connected(user):
     print('We connected yo!')
     print(f'Bot username: {user.login}')
@@ -41,7 +41,7 @@ async def on_connected(user):
     await client.join_channel(AN_AWESOME_STREAMER)
 
 
-@client.event(name=twitch.Event.MESSAGE)
+@client.event(twitch.Event.MESSAGE)
 async def message_listener(message):
     content = message.content
 
