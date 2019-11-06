@@ -253,7 +253,12 @@ class Badge:
         elif badge_type == 'premium':
             return Badge.Type.PRIME
         else:
-            raise ValueError(f'badge type {badge_type} is not supported')
+            # TODO: there are many custom badges, need to think about what
+            #  to do here as ideally the badges would be an enum. But may
+            #  have to just let them be strings and let the user compare them-
+            #  selves...
+            return None
+            # raise ValueError(f'badge type {badge_type} is not supported')
 
 
 class Color:
