@@ -53,7 +53,7 @@ client.run('login_name', 'access_token')
 -----------
 
 #### Commands Plugin: Ping-Pong
-The commands plugin makes it possible to get a ping-pong bot running **under 10 lines of actual code!!**
+The commands plugin makes it possible to get a ping-pong bot running in **under 10 lines of actual code!!**
 ```python
 from twitch.plugins.commands import Bot
 
