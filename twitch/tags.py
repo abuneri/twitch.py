@@ -207,6 +207,7 @@ class BadgeType(enum.Enum):
     SUBSCRIBER = 5
     STAFF = 6
     TURBO = 7
+    PRIME = 8
 
 
 class Badge:
@@ -249,6 +250,8 @@ class Badge:
             return BadgeType.STAFF
         elif badge_type == 'turbo':
             return BadgeType.TURBO
+        elif badge_type == 'premium':
+            return BadgeType.PRIME
         else:
             raise ValueError(f'badge type {badge_type} is not supported')
 
