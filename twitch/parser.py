@@ -6,7 +6,7 @@ from .exception import WebSocketLoginFailure
 from .utils import split_skip_empty_parts
 from .message import Message
 from .channel import Channel
-from .user import User
+from .tags import Tags
 from.capability import Capability, CapabilityConfig
 
 LF = '\n'
@@ -76,13 +76,22 @@ class MessageParserHandler:
 class SingleLineMessageParser(MessageParserHandler, IMessageParser):
     def __init__(self, *, ws):
         super().__init__(ws=ws)
+        self._message_handled = False
+        self._tags_data = None
+
+    @property
+    def tags_data(self):
+        return self._tags_data
 
     async def parse(self, msg):
         self._message_handled = False
 
         have_tags = msg.startswith(TAG_IDENTIFIER)
         tags_dict, remaining_msg = _parse_whole_msg(msg, have_tags)
+        raw_msg = msg
         msg = remaining_msg
+
+        self._tags_data = tags_dict
 
         if OpCode.PING in msg:
             self.emit(Event.PINGED)
@@ -125,24 +134,28 @@ class SingleLineMessageParser(MessageParserHandler, IMessageParser):
             """
             msg_parts = split_skip_empty_parts(msg)
             if not msg_parts:
-                return
+                return False
 
             msg_dict = _parse_msg(msg_parts)
             if msg_dict:
                 opcode = msg_dict['opcode']
                 channel_name = msg_dict['channel_name']
                 username = msg_dict['username']
+
                 user = await self._ws._session.get_user(login=username)
 
                 if opcode == OpCode.PRIVMSG:
-                    User.parse_tags(user, tags_dict)
-                    text = _get_args(msg_dict)
-                    if text:
-                        text = ' '.join(text).lstrip(':')
+                    user.add_tags_data(tags_dict)
+                    content = _get_args(msg_dict)
+                    if content:
+                        text = ' '.join(content).lstrip(':')
                         channel = Channel(channel_name,
-                                          session=self._ws._session)
+                                          session=self._ws._session,
+                                          tags_data=tags_dict)
+
                         message = Message(text, user, channel,
-                                          session=self._ws._session)
+                                          session=self._ws._session,
+                                          tags_data=tags_dict)
 
                         self.emit(Event.MESSAGE, message)
 
@@ -203,7 +216,9 @@ class MultiLineMessageParser(MessageParserHandler, IMessageParser):
 
                         if channel_name:
                             channel = Channel(channel_name,
-                                              session=self._ws._session)
+                                              session=self._ws._session,
+                                              tags_data=
+                                              self._sl_parser.tags_data)
 
             if usernames and channel:
                 users = await self._ws._session.get_users(logins=usernames)

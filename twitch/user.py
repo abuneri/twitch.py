@@ -2,20 +2,18 @@ import enum
 from .tags import Tags, Badge, Color
 
 
-class Broadcaster(enum.Enum):
-    NONE = 0
-    AFFILIATE = 1
-    PARTNER = 2
-
-
-class UserType(enum.Enum):
-    REGULAR = 0
-    GLOBAL_MOD = 1
-    ADMIN = 2
-    STAFF = 3
-
-
 class User:
+    class Broadcaster(enum.Enum):
+        NORMAL = 0
+        AFFILIATE = 1
+        PARTNER = 2
+
+    class Type(enum.Enum):
+        REGULAR = 0
+        GLOBAL_MOD = 1
+        ADMIN = 2
+        STAFF = 3
+
     def __init__(self, json, *, session):
         self._broadcaster = User._to_broadcaster(json.get('broadcaster_type'))
         self._description = json.get('description')
@@ -32,6 +30,7 @@ class User:
         # below are properties only set by tags
         self._color = None
         self._badges = None
+        self._is_mod = None
 
     @property
     def broadcaster(self):
@@ -81,39 +80,55 @@ class User:
     def badges(self):
         return self._badges
 
-    @staticmethod
-    def _to_broadcaster(broadcaster_type):
-        if broadcaster_type == 'partner':
-            return Broadcaster.PARTNER
-        elif broadcaster_type == 'affiliate':
-            return Broadcaster.AFFILIATE
-        else:
-            return Broadcaster.NONE
+    def add_tags_data(self, tags_dict):
+        if not tags_dict:
+            return
 
-    @staticmethod
-    def _to_type(user_type):
-        if user_type == 'staff':
-            return UserType.STAFF
-        elif user_type == 'admin':
-            return UserType.ADMIN
-        elif user_type == 'global_mod':
-            return UserType.GLOBAL_MOD
-        else:
-            return UserType.REGULAR
-
-    @classmethod
-    def parse_tags(cls, user, tags_dict):
-        # badges
         bad_info = tags_dict.get(Tags.BADGE_INFO)
         badges_str = tags_dict.get(Tags.BADGES)
         badges = [Badge(badge, bad_info) for badge in badges_str.split(',') if
                   badges_str]
 
-        user._badges = badges
+        self._badges = badges
 
-        # bits
+        # TODO: bits
 
-        # color
         color = tags_dict.get(Tags.COLOR)
         if color:
-            user._color = Color(color)
+            self._color = Color(color)
+
+        # display name only set if its different than the current display name
+        display_name = tags_dict.get(Tags.DISPLAY_NAME)
+        if display_name:
+            self._display_name = display_name if display_name \
+                                                 != self.display_name else \
+                                                 self.display_name
+
+        mod = tags_dict.get(Tags.MOD)
+        self._is_mod = mod if mod else False
+
+        # user id only set if its different than the current user id
+        # (which it should never be, but this is just for completeness)
+        user_id = tags_dict.get(Tags.USER_ID)
+        if user_id:
+            self._user_id == user_id if user_id != self.id else self.id
+
+    @staticmethod
+    def _to_broadcaster(broadcaster_type):
+        if broadcaster_type == 'partner':
+            return User.Broadcaster.PARTNER
+        elif broadcaster_type == 'affiliate':
+            return User.Broadcaster.AFFILIATE
+        else:
+            return User.Broadcaster.NORMAL
+
+    @staticmethod
+    def _to_type(user_type):
+        if user_type == 'staff':
+            return User.Type.STAFF
+        elif user_type == 'admin':
+            return User.Type.ADMIN
+        elif user_type == 'global_mod':
+            return User.Type.GLOBAL_MOD
+        else:
+            return User.Type.REGULAR
