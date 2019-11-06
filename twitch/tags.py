@@ -23,6 +23,7 @@ class Tags:
     SYSTEM_MSG = 'system-msg'
     TMI_SENT_TS = 'tmi-sent-ts'
     USER_ID = 'user-id'
+    TARGET_MSG_ID = 'target-msg-id'
 
 
 class MsgParamTags:

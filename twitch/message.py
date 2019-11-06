@@ -25,6 +25,14 @@ class Message:
                 unix_epoch = float(tmi_time_sent) / 1000
                 self._time_sent = datetime.utcfromtimestamp(unix_epoch)
 
+            if Tags.ID or Tags.TARGET_MSG_ID in tags_data:
+                msg_id = tags_data.get(Tags.ID)
+                if msg_id:
+                    self._id = msg_id
+                target_msg_id = tags_data.get(Tags.TARGET_MSG_ID)
+                if target_msg_id:
+                    self._id = target_msg_id
+
     @property
     def content(self):
         return self._content
