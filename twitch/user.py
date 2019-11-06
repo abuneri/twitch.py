@@ -80,6 +80,10 @@ class User:
     def badges(self):
         return self._badges
 
+    @property
+    def is_mod(self):
+        return self._is_mod
+
     def add_tags_data(self, tags_dict):
         if not tags_dict:
             return
@@ -105,7 +109,7 @@ class User:
                                                  self.display_name
 
         mod = tags_dict.get(Tags.MOD)
-        self._is_mod = mod if mod else False
+        self._is_mod = mod == 1
 
         # user id only set if its different than the current user id
         # (which it should never be, but this is just for completeness)
