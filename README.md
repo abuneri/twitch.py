@@ -85,7 +85,7 @@ class Foo:
 
 bot = Bot(command_prefix='@', channels=['channel_name'])
 
-@bot.register_type(Foo)
+@bot.register(Foo)
 def reg_foo(s: str):
     s_parts = s.split(';')
     if len(s_parts) == 2:
