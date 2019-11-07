@@ -21,32 +21,23 @@ design inspired by the [discord.py](https://github.com/Rapptz/discord.py/) libra
 
 ## Simple Examples
 A glimpse into the library to get you started!
-#### Base Client: Echoing a streamers chat
+#### Base Client: Joining a channel and echoing the chat to your console
 ```python
 import twitch
 
 client = twitch.Client()
 
-AN_AWESOME_STREAMER = '<streamer>'
-
 
 @client.event(twitch.Event.CONNECTED)
 async def on_connected(user):
-    print('We connected yo!')
     print(f'Bot username: {user.login}')
     print(f'Bot id: {user.id}')
-    print('---------------------\n')
-    
-    print(f'Joining {AN_AWESOME_STREAMER}s channel...')
-    await client.join_channel(AN_AWESOME_STREAMER)
+    await client.join_channel('channel_name')
 
 
 @client.event(twitch.Event.MESSAGE)
 async def message_listener(message):
-    content = message.content
-
-    print(f'[#{message.channel.name}] {message.author.login}: {content}')
-    await message.channel.send(content)
+    print(f'[#{message.channel.name}] {message.author.login}: {message.content}')
 
 client.run('login_name', 'access_token')
 ```
