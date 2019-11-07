@@ -63,10 +63,6 @@ class WebSocketClient(websockets.client.WebSocketClientProtocol):
 
         log.info(f'websocket created. connected to {WebSocketClient.WSS_URL}')
 
-        # register internal helper handlers
-        client.event_handler.register(Event.AUTHENTICATED,
-                                      ws._authenticated_handler)
-
         # establish a valid connection to websocket
         await ws.send_authenticate()
 
@@ -87,6 +83,15 @@ class WebSocketClient(websockets.client.WebSocketClientProtocol):
         self._emit(Event.SOCKET_SEND, data)
 
     async def send_authenticate(self):
+        if self.capability.tags:
+            await self.send_tags_request()
+        if self.capability.membership:
+            await self.send_membership_request()
+        if self.capability.commands:
+            await self.send_commands_request()
+        if self.capability.chat_rooms:
+            await self.send_chat_rooms_request()
+
         pass_msg = f'{OpCode.PASS} {self.access_token}'
         nick_msg = f'{OpCode.NICK} {self.username}'
 
@@ -142,13 +147,3 @@ class WebSocketClient(websockets.client.WebSocketClientProtocol):
         if not msg_handled:
             log.info('following message from the server was not handled:\n'
                      f'{msg}')
-
-    async def _authenticated_handler(self):
-        if self.capability.tags:
-            await self.send_tags_request()
-        if self.capability.membership:
-            await self.send_membership_request()
-        if self.capability.commands:
-            await self.send_commands_request()
-        if self.capability.chat_rooms:
-            await self.send_chat_rooms_request()

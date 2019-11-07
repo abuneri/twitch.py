@@ -125,6 +125,10 @@ class SingleLineMessageParser(MessageParserHandler, IMessageParser):
             elif capability == Capability.CHAT_ROOMS:
                 self.emit(Event.CHAT_ROOMS_REQUEST_ACKED)
 
+        elif OpCode.GLOBALUSERSTATE in msg:
+            # TODO
+            pass
+
         else:
             """
             msg format is always this for these OpCode:
