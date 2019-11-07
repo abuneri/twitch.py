@@ -70,7 +70,7 @@ class MessageParserHandler:
                 return await parser.parse(msg_parts)
         else:
             ws._authenticated = True
-            ws._emit(Event.AUTHENTICATED)
+            ws._emit(Event._AUTHENTICATED)
             return True
 
 
