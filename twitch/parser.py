@@ -195,6 +195,9 @@ class SingleLineMessageParser(MessageParserHandler, IMessageParser):
                         # meh
                         pass
 
+                elif opcode == OpCode.ROOMSTATE:
+                    self.emit(Event.ROOMSTATE_RECEIVED, channel)
+
                 elif opcode == OpCode.JOIN:
                     self.emit(Event.USER_JOIN_CHANNEL, user, channel_name)
 
