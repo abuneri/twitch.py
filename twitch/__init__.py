@@ -19,4 +19,4 @@ from .user import User
 from .message import Message
 from .channel import Channel
 from .events import Event
-from .tags import Color
+from .tags import Badge, Color, Emote

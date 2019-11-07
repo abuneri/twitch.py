@@ -14,13 +14,20 @@ class Event:
     .. code-block:: python3
 
         @client.event(twitch.Event.CONNECTED)
-        async def socket_send(user):
+        async def on_connected(user):
             print(f'Bot username: {user.login}')
             print(f'Bot id: {user.id}')
     """
 
     DISCONNECT = 'disconnect'
     """
+    Called when the Websocket client connection to the server is closed
+    
+    .. code-block:: python3
+
+        @client.event(twitch.Event.DISCONNECT)
+        async def on_disconnected():
+            print('Client disconnected')
     """
 
     SOCKET_SEND = 'socket_send'
@@ -39,20 +46,32 @@ class Event:
 
     SOCKET_RECEIVE = 'socket_receive'
     """
-       Called when the Websocket client receives a message from the server.
+    Called when the Websocket client receives a message from the server.
 
-       :param raw_msg: The raw message received from the server
+    :param raw_msg: The raw message received from the server
 
 
-       .. code-block:: python3
+    .. code-block:: python3
 
-           @client.event(twitch.Event.SOCKET_RECEIVE)
-           async def socket_recv(raw_msg):
-               print(raw_msg)
-       """
+        @client.event(twitch.Event.SOCKET_RECEIVE)
+        async def socket_recv(raw_msg):
+            print(raw_msg)
+    """
 
     MESSAGE = 'message'
     """
+    Boop
+    
+    :param message: The message received from the server :class:`Message` 
+    
+    
+    .. code-block:: python3
+    
+        @client.event(twitch.Event.MESSAGE)
+        async def message_handler(message):
+            print(f'[#{message.channel.name}] '
+                  f'{message.author.login}: '
+                  f'{message.content}')
     """
 
     USER_JOIN_CHANNEL = 'user_join_channel'

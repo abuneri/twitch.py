@@ -18,6 +18,62 @@ Capabilities
 .. autoclass:: CapabilityConfig
     :members:
 
+Models
+------
+
+Models are classes that are received from Twitch and are not meant to be created by the user of the library.
+
+.. danger::
+    As stated above, these classes are not meant to be manually created. They are wrapping up data sent from Twitch's
+    IRC and Helix APIs.
+
+User
+~~~~
+
+.. autoclass:: User
+    :members:
+
+Channel
+~~~~~~~
+
+.. autoclass:: Channel
+    :members:
+
+Message
+~~~~~~~
+
+.. autoclass:: Message
+    :members:
+
+Tag Models
+----------
+
+Tag Models are classes that are received from Twitch's IRC if the tags :class:`CapabilityConfig` is true. These
+are not meant to be created by the user of the library.
+
+.. danger::
+    As stated above, these classes are not meant to be manually created. They are wrapping up data sent from Twitch's
+    IRC Tags capability.
+
+Badge
+~~~~~
+
+.. autoclass:: Badge
+    :members:
+
+Color
+~~~~~
+
+.. autoclass:: Color
+    :members:
+
+Emote
+~~~~~
+
+.. autoclass:: Emote
+    :members:
+
+
 .. _events:
 
 Events
