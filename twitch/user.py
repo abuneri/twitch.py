@@ -109,7 +109,8 @@ class User:
                                                  self.display_name
 
         mod = tags_dict.get(Tags.MOD)
-        self._is_mod = mod == 1
+        if mod:
+            self._is_mod = int(mod) == 1
 
         # user id only set if its different than the current user id
         # (which it should never be, but this is just for completeness)
