@@ -48,7 +48,7 @@ class Bot(twitch.Client):
             return wrapper
         return decorator(self)
 
-    def register_type(self, type):
+    def register(self, type):
         def decorator(bot):
             def wrapper(func):
                 if asyncio.iscoroutinefunction(func):
