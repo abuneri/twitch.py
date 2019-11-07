@@ -198,11 +198,14 @@ class SingleLineMessageParser(MessageParserHandler, IMessageParser):
                 elif opcode == OpCode.ROOMSTATE:
                     self.emit(Event.ROOMSTATE_RECEIVED, channel)
 
+                elif opcode == OpCode.USERSTATE:
+                    self.emit(Event.USER_JOIN_CHANNEL, user, channel)
+
                 elif opcode == OpCode.JOIN:
-                    self.emit(Event.USER_JOIN_CHANNEL, user, channel_name)
+                    self.emit(Event.USER_JOIN_CHANNEL, user, channel)
 
                 elif opcode == OpCode.PART:
-                    self.emit(Event.USER_LEFT_CHANNEL, user, channel_name)
+                    self.emit(Event.USER_LEFT_CHANNEL, user, channel)
 
                 # TODO: handle remaining op codes
 
