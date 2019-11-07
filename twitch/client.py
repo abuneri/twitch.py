@@ -16,6 +16,33 @@ log = logging.getLogger(__name__)
 
 
 class Client:
+    """Represents a client connection that connects to Twitch.
+        This class is used to interact with the Twitch IRC (via WebSocket)
+        and Helix API.
+        A number of options can be passed to the :class:`Client`.
+
+        Parameters
+        -----------
+
+        capability: Optional[:class:`CapabilityConfig`]
+            Defaults to ``CapabilityConfig()`` where all
+            capabilities will be requested.
+        loop: Optional[:class:`asyncio.AbstractEventLoop`]
+            The :class:`asyncio.AbstractEventLoop` to use for asynchronous
+            operations. Defaults to ``None``, in which case the
+            default event loop is used via :func:`asyncio.get_event_loop()`.
+        connector: :class:`aiohttp.BaseConnector`
+            The connector to use for connection pooling.
+
+        Attributes
+        -----------
+        ws
+            The websocket gateway the client is currently connected to.
+            Could be ``None``.
+        loop: :class:`asyncio.AbstractEventLoop`
+            The event loop that the client uses for HTTP requests and
+            websocket operations.
+        """
     def __init__(self, *, capability=CapabilityConfig(), loop=None, **kwargs):
         self.ws = None
         self.username = None
@@ -32,6 +59,28 @@ class Client:
     # ================ #
 
     def event(self, name):
+        """A decorator that registers an event to listen to.
+                You can find more info about the events_ here.
+                The events must be a ``coroutine``, if not,
+                :exc:`TypeError` is raised.
+
+                Example
+                ---------
+
+                .. code-block:: python3
+
+                    @client.event(twitch.Event.CONNECTED)
+                    async def on_connected(user):
+                        print(f'{user.login} connected!')
+                Raises
+                --------
+                TypeError
+                    The coroutine passed is not actually a coroutine.
+
+                ValueError
+                    The coroutine's name can't start with an
+                    underscore (``_``). Those are reserved for the library.
+                """
         def decorator(client):
             def wrapper(coro):
                 if not asyncio.iscoroutinefunction(coro):
