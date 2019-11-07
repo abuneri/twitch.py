@@ -75,6 +75,7 @@ class Client:
         user_ids = [user_id] if user_id else None
         logins = [login] if login else None
         users = await self.get_users(user_ids=user_ids, logins=logins)
+        user_id = int(user_id) if user_id else user_id
         for user in users:
             if user_id == user.id or login == user.login:
                 return user
