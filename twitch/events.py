@@ -22,7 +22,7 @@ class Event:
     DISCONNECT = 'disconnect'
     """
     Called when the Websocket client connection to the server is closed
-    
+
     .. code-block:: python3
 
         @client.event(twitch.Event.DISCONNECT)
@@ -33,12 +33,12 @@ class Event:
     SOCKET_SEND = 'socket_send'
     """
     Called when the Websocket client sends a message to the server.
-    
+
     :param raw_msg: The raw message sent to the server
-    
+
     
     .. code-block:: python3
-        
+
         @client.event(twitch.Event.SOCKET_SEND)
         async def socket_send(raw_msg):
             print(raw_msg)
@@ -61,12 +61,12 @@ class Event:
     MESSAGE = 'message'
     """
     Boop
-    
-    :param message: The message received from the server :class:`Message` 
-    
-    
+
+    :param message: The message received from the server :class:`Message`
+
+
     .. code-block:: python3
-    
+
         @client.event(twitch.Event.MESSAGE)
         async def message_handler(message):
             print(f'[#{message.channel.name}] '
