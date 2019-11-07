@@ -154,8 +154,7 @@ class HTTPClient:
 
                     data = await response.json()
 
-                    reset_seconds = self._handle_ratelimit(bucket,
-                                                           response.headers,
+                    reset_seconds = self._handle_ratelimit(response.headers,
                                                            response.status)
                     if reset_seconds:
                         log.info(
