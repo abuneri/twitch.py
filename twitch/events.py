@@ -64,7 +64,6 @@ class Event:
     MESSAGE_CLEARED = 'message_cleared'
     USER_BANNED = 'user_banned'
     USER_PERMANENT_BANNED = 'user_permanent_banned'
-    MESSAGE_CLEARED = 'message_cleared'
     HOST_MODE_CHANGED = 'host_mode_updated'
     CHANNELS_REJOINED = 'channels_rejoined'
     CHANNEL_STATE_CHANGED = 'channel_state_update'
