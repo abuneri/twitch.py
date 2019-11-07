@@ -54,6 +54,7 @@ OpCodeDef = namedtuple('OpCodeDef', 'PING '
                                     'ROOMSTATE '
                                     'USERNOTICE '
                                     'USERSTATE '
+                                    'GLOBALUSERSTATE '
                                     'CAP '
                                     'ACK '
                                     'REQ')
@@ -74,6 +75,7 @@ OpCode = OpCodeDef(PING='PING',
                    ROOMSTATE='ROOMSTATE',
                    USERNOTICE='USERNOTICE',
                    USERSTATE='USERSTATE',
+                   GLOBALUSERSTATE='GLOBALUSERSTATE',
                    CAP='CAP',
                    ACK='ACK',
                    REQ='REQ')
