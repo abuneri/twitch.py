@@ -29,7 +29,7 @@ Plugins
 .. toctree::
    :maxdepth: 3
 
-   plugins/commands/index.rst
+   plugins/index.rst
 
 Useful Information
 ==================
