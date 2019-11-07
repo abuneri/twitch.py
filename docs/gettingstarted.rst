@@ -23,8 +23,8 @@ TODO (need to publish on PyPi)
 Basic Concepts
 ---------------
 
-twitch.py's main concept is connecting to twitch channels, and listening for events that occur. After you are connected,
-you must manually join channels, otherwise you wont receive any useful twitch-related events.
+twitch.py's main concept is joining twitch channels and listening for events that occur. After you are connected
+to the client, you must manually join channels, otherwise you wont receive any useful twitch-related events.
 
 Here's a quick example to show how to join a channel and listen for all the messages sent in the channel:
 
