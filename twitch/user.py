@@ -117,6 +117,9 @@ class User:
         if user_id:
             self._user_id == user_id if user_id != self.id else self.id
 
+        # TODO: parse emote-sets. Only useful for making requests to the V5
+        #  API which currently isn't supported
+
     @staticmethod
     def _to_broadcaster(broadcaster_type):
         if broadcaster_type == 'partner':

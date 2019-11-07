@@ -126,8 +126,10 @@ class SingleLineMessageParser(MessageParserHandler, IMessageParser):
                 self.emit(Event.CHAT_ROOMS_REQUEST_ACKED)
 
         elif OpCode.GLOBALUSERSTATE in msg:
-            # TODO
-            pass
+            user_id = tags_dict.get(Tags.USER_ID)
+            user = await self._ws._session.get_user(user_id=user_id)
+            user.add_tags_data(tags_dict)
+            self.emit(Event.GLOBAL_USERSTATE_RECEIVED, user)
 
         else:
             """

@@ -74,5 +74,6 @@ class Event:
     MEMBERSHIP_REQUEST_ACKED = 'membership_request_acked'
     COMMANDS_REQUEST_ACKED = 'commands_request_acked'
     CHAT_ROOMS_REQUEST_ACKED = 'chat_rooms_request_acked'
+    GLOBAL_USERSTATE_RECEIVED = 'global_userstate_received'
     UNKNOWN = 'unknown'
     AUTHENTICATED = '_authenticated'
