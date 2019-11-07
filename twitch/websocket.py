@@ -28,7 +28,7 @@ class TwitchBackoff:
             self._first = False
             return 0
         else:
-            self._sleep_period = self._sleep_period * 2
+            self._sleep_period *= 2
             return self._sleep_period
 
 
