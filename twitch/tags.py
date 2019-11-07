@@ -13,6 +13,7 @@ class Tags:
     EMOTES = 'emotes'
     FOLLOWERS_ONLY = 'followers-only'
     ID = 'id'
+    MSG_ID = 'msg-id'
     LOGIN = 'login'
     MESSAGE = 'message'
     MOD = 'mod'

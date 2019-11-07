@@ -207,7 +207,10 @@ class SingleLineMessageParser(MessageParserHandler, IMessageParser):
                 elif opcode == OpCode.PART:
                     self.emit(Event.USER_LEFT_CHANNEL, user, channel)
 
-                # TODO: handle remaining op codes
+                elif opcode == OpCode.USERNOTICE:
+                    # TODO: handle this at some point,
+                    #  can't be bothered right now
+                    pass
 
                 else:
                     self.emit(Event.UNKNOWN, msg)
