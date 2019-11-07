@@ -111,7 +111,7 @@ class HTTPClient:
         reset = datetime.datetime.fromtimestamp(reset_epoch, utc)
         return (reset - now).total_seconds()
 
-    def _handle_ratelimit(self, bucket, headers, status):
+    def _handle_ratelimit(self, headers, status):
         if 'ratelimit-remaining' in headers and 'ratelimit-reset' in headers:
             if headers['ratelimit-remaining'] == str(0) and status != 429:
                 reset_epoch = int(headers['ratelimit-reset'])
