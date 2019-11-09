@@ -202,15 +202,26 @@ class MsgIdTags:
 
 class Badge:
     class Type(enum.Enum):
-        ADMIN = 0
-        BITS = 1
-        BROADCASTER = 2
-        GLOBAL_MOD = 3
-        MODERATOR = 4
-        SUBSCRIBER = 5
-        STAFF = 6
-        TURBO = 7
-        PRIME = 8
+        """
+        Represents the different badges that a user may have.
+
+        .. note::
+
+            This is not a complete enumeration, as there are many event/league
+            specific badges, and no way to support them all as Twitch doesn't
+            give us the full list, as I assume it's very fluid; however, these
+            are the main badges that you will see users with.
+
+        """
+        ADMIN = 0  #:
+        BITS = 1  #:
+        BROADCASTER = 2  #:
+        GLOBAL_MOD = 3  #:
+        MODERATOR = 4  #:
+        SUBSCRIBER = 5  #:
+        STAFF = 6  #:
+        TURBO = 7  #:
+        PRIME = 8  #:
 
     def __init__(self, badge, info):
         info_parts = info.split('/')
@@ -224,14 +235,38 @@ class Badge:
 
     @property
     def type(self):
+        """
+        The type of Badge
+
+        :type: :class:`Badge.Type`
+        """
         return self._type
 
     @property
     def version(self):
+        """
+        The version of the Badge. For example, a 3 month subscriber's badge
+        version will be different than a 1 month badge
+
+        :type: :class:`int`
+        """
         return self._version
 
     @property
     def subscriber_months(self):
+        """
+        If the badge is a subscriber badge, this will return the actual
+        amount of months the use is subscribed. For example, a user may have
+        the 6 month badge, but have been subscribed for 8 months (they may not
+        receive their next badge until 9 or 12 months).
+
+        .. note::
+
+            If the badge type is not a subscriber, this will return
+            :class:`None`
+
+        :type: :class:`int`
+        """
         return self._subscriber_months
 
     @staticmethod
@@ -282,18 +317,41 @@ class Color:
 
     @property
     def red(self):
+        """
+        The red component of an RGB color. An integer between 0 and 255
+
+        :type: :class:`int`
+        """
         return self._red
 
     @property
     def green(self):
+        """
+        The green component of an RGB color. An integer between 0 and 255
+
+        :type: :class:`int`
+        """
         return self._green
 
     @property
     def blue(self):
+        """
+        The blue component of an RGB color. An integer between 0 and 255
+
+        :type: :class:`int`
+        """
         return self._blue
 
     @property
     def hex(self):
+        """
+        The full hexadecimal representation of an RGB color. A string, prefixed
+        with #, of six hexadecimal numbers, between 0 and F each. For example,
+        if the RGB color is ``255`` (red), ``255`` (green), ``255`` (blue).
+        This will return ``#FFFFFF``
+
+        :type: :class:`str`
+        """
         return self._hex
 
 
@@ -317,9 +375,19 @@ class Emote:
 
     @property
     def occurances(self):
+        """
+        The number of times the emote occurred in a single message
+
+        :type: :class:`int`
+        """
         return len(self._indexes)
 
     @property
     def url(self, size=None):
+        """
+        The url to the image of the actual emote
+
+        :type: :class:`str`
+        """
         size = size if size else Emote.Size.SMALL
         return f'{Emote.BASE_CDN_URL}/{self._id}/{size}'
