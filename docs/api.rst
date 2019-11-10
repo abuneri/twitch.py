@@ -138,8 +138,8 @@ This section enumerates the different types of events you can choose to listen t
 .. autoattribute:: twitch.Event.CHANNELS_REJOINED
     :annotation:
 
-.. autoattribute:: twitch.Event.HOST_MODE_CHANGED
-    :annotation:
+.. .. autoattribute:: twitch.Event.HOST_MODE_CHANGED
+        :annotation:
 
 .. autoattribute:: twitch.Event.TAG_REQUEST_ACKED
     :annotation:
