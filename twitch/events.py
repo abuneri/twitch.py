@@ -60,7 +60,7 @@ class Event:
 
     MESSAGE = 'message'
     """
-    Boop
+    Called when a message is sent in any of the channels your client has joined
 
     :param message: The message received from the server :class:`Message`
 
@@ -92,6 +92,15 @@ class Event:
 
     CHAT_CLEARED = 'chat_cleared'
     """
+    Called when either all messages in a channel are deleted
+
+    :param channel: The channel where the messages were deleted/cleared
+
+    .. code-block:: python3
+
+        @client.event(twitch.Event.CHAT_CLEARED)
+        async def on_clear_chat(channel):
+            print(f'The messages in {channel.name}s chat we're just cleared!')
     """
 
     MESSAGE_CLEARED = 'message_cleared'
@@ -128,18 +137,50 @@ class Event:
 
     TAG_REQUEST_ACKED = 'tag_request_acked'
     """
+    Called after the client has requested the tags capability and the server
+    successfully acknowledges/includes the behaviour.
+
+    .. code-block:: python3
+
+        @client.event(twitch.Event.TAG_REQUEST_ACKED)
+        async def tags_acked(message):
+            print(f'We have the tags capability!')
     """
 
     MEMBERSHIP_REQUEST_ACKED = 'membership_request_acked'
     """
+    Called after the client has requested the membership capability and the
+    server successfully acknowledges/includes the behaviour.
+
+    .. code-block:: python3
+
+        @client.event(twitch.Event.MEMBERSHIP_REQUEST_ACKED)
+        async def membership_acked(message):
+            print(f'We have the membership capability!')
     """
 
     COMMANDS_REQUEST_ACKED = 'commands_request_acked'
     """
+    Called after the client has requested the commands capability and the
+    server successfully acknowledges/includes the behaviour.
+
+    .. code-block:: python3
+
+        @client.event(twitch.Event.COMMANDS_REQUEST_ACKED)
+        async def commands_acked(message):
+            print(f'We have the commands capability!')
     """
 
     CHAT_ROOMS_REQUEST_ACKED = 'chat_rooms_request_acked'
     """
+    Called after the client has requested the chat rooms capability and the
+    server successfully acknowledges/includes the behaviour.
+
+    .. code-block:: python3
+
+        @client.event(twitch.Event.CHAT_ROOMS_REQUEST_ACKED)
+        async def chat_rooms_acked(message):
+            print(f'We have the chat rooms capability!')
     """
 
     GLOBAL_USERSTATE_RECEIVED = 'global_userstate_received'
