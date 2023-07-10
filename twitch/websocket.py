@@ -83,14 +83,7 @@ class WebSocketClient(websockets.client.WebSocketClientProtocol):
         self._emit(Event.SOCKET_SEND, data)
 
     async def send_authenticate(self):
-        if self.capability.tags:
-            await self.send_tags_request()
-        if self.capability.membership:
-            await self.send_membership_request()
-        if self.capability.commands:
-            await self.send_commands_request()
-        if self.capability.chat_rooms:
-            await self.send_chat_rooms_request()
+        await self.send_tags()
 
         pass_msg = f'{OpCode.PASS} {self.access_token}'
         nick_msg = f'{OpCode.NICK} {self.username}'
@@ -114,21 +107,12 @@ class WebSocketClient(websockets.client.WebSocketClientProtocol):
         msg = f'{OpCode.PRIVMSG} {CHANNEL_PREFIX}{channel_name} :{message}'
         await self.send(msg)
 
-    async def send_tags_request(self):
+    async def send_tags(self):
         msg = f'{WebSocketClient.CAPABILITY_REQUEST}{TAGS_CAPABILITY}'
-        await self.send(msg)
-
-    async def send_membership_request(self):
-        msg = f'{WebSocketClient.CAPABILITY_REQUEST}{MEMBERSHIP_CAPABILITY}'
-        await self.send(msg)
-
-    async def send_commands_request(self):
-        msg = f'{WebSocketClient.CAPABILITY_REQUEST}{COMMANDS_CAPABILITY}'
-        await self.send(msg)
-
-    async def send_chat_rooms_request(self):
-        msg = f'{OpCode.CAP} {OpCode.REQ} :{TAGS_CAPABILITY} ' \
-              f'{COMMANDS_CAPABILITY}'
+        if self.capability.membership:
+            msg += f' {MEMBERSHIP_CAPABILITY}'
+        if self.capability.commands:
+            msg += f' {COMMANDS_CAPABILITY}'
         await self.send(msg)
 
     # incoming message management
