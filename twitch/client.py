@@ -323,22 +323,22 @@ class Client:
         self.event_handler.clear_connected()
         self.http.recreate_session()
 
-    async def login(self, username, access_token):
+    async def login(self, username, access_token, client_id):
         log.info('logging in with static username and access token')
         self.username = username
-        await self.http.create_session(access_token)
+        await self.http.create_session(access_token, client_id)
 
     async def logout(self):
         await self.close()
 
-    async def start(self, username, access_token, *, reconnect=True):
+    async def start(self, username, access_token, client_id, *, reconnect=True):
         """
         A shorthand coroutine for :meth:`login` + :meth:`connect`.
         """
-        await self.login(username, access_token)
+        await self.login(username, access_token, client_id)
         await self.connect(reconnect=reconnect)
 
-    def run(self, username, access_token, *, reconnect=True):
+    def run(self, username, access_token, client_id, *, reconnect=True):
         """
         A blocking call that abstracts away the event loop
         initialisation from you.
@@ -373,7 +373,7 @@ class Client:
 
         async def launch():
             try:
-                await self.start(username, access_token, reconnect=reconnect)
+                await self.start(username, access_token, client_id, reconnect=reconnect)
             finally:
                 await self.close()
 
