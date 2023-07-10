@@ -128,7 +128,13 @@ bot.run('login_name', 'access_token')
 ``access_token``:
 - Token received via one of the [authentication](#authentication) methods. The token can be prefixed with ``oauth:``, but **it doesn't have to be**, the library handles both cases.
 
+``client_id``:
+- Client ID of your OAuth 2 application created in the [developer console](https://dev.twitch.tv/console/apps)
+
 ## Authentication
+https://twitchapps.com/tokengen/
+
 You have two ways to get the access token required
-1. Use an [existing service](https://twitchapps.com/tmi/) to easily get a token
+1. Use an [existing service](https://twitchapps.com/tokengen/) to retrieve an access token for your application
+   1. Make sure you are using the correct [scopes](https://dev.twitch.tv/docs/authentication/scopes/) for both the Rest API and the Websocket API
 2. Roll your own with [Twitch's OAuth 2.0 authorization flow](https://dev.twitch.tv/docs/authentication#getting-tokens)

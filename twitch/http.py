@@ -52,6 +52,7 @@ class HTTPClient:
         self.loop = loop if loop else asyncio.get_event_loop()
         self.connector = connector
         self._access_token = None
+        self._client_id = None
         self._session = None
         self._bucket_locks = WeakValueDictionary()
         self._rate_limit_reset = None
@@ -70,12 +71,13 @@ class HTTPClient:
     async def access_token(self, new_token):
         await self.create_session(new_token)
 
-    async def create_session(self, access_token):
+    async def create_session(self, access_token, client_id):
         access_token = HTTPClient._normalize_access_token(access_token)
         self._session = aiohttp.ClientSession(connector=self.connector,
                                               loop=self.loop)
         previous_token = self._access_token
         self._access_token = access_token
+        self._client_id = client_id
 
         try:
             await self.request(HTTPRoute('GET', '/games'), params={'id': 0})
@@ -135,6 +137,8 @@ class HTTPClient:
 
         if self._access_token is not None:
             headers['Authorization'] = f'Bearer {self._access_token}'
+        if self._client_id is not None:
+            headers['Client-Id'] = self._client_id
         if 'json' in kwargs:
             headers['Content-Type'] = 'application/json'
             kwargs['data'] = kwargs.pop('json')
