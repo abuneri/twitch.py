@@ -56,7 +56,6 @@ class EventHandler:
                 coro.__name__
 
         coros = getattr(self, event, [])
-        # ensure the same on_message coro can't be registered twice
         if coro_name not in [get_name(c) for c in coros]:
             coros.append(coro)
         setattr(self, event, coros)

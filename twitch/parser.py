@@ -237,8 +237,7 @@ class MultiLineMessageParser(MessageParserHandler, IMessageParser):
             if cap_config.commands:
                 self.emit(Event.COMMANDS_REQUEST_ACKED)
             if cap_config.chat_rooms:
-                # although the doc says chat rooms doesn't have an ack, it
-                # actually does...
+                # TODO: this capability will be deprecated soon, remove it then
                 self.emit(Event.CHAT_ROOMS_REQUEST_ACKED)
         else:
             usernames = []
