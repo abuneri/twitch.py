@@ -42,7 +42,7 @@ async def on_connected(user):
 async def message_listener(message):
     print(f'[#{message.channel.name}] {message.author.login}: {message.content}')
 
-client.run('login_name', 'access_token')
+client.run('login_name', 'access_token', 'client_id')
 ```
 -----------
 
@@ -58,7 +58,7 @@ bot = Bot(command_prefix='>', channels=['channel_name'])
 async def ping(ctx):
     await ctx.send('pong')
 
-bot.run('login_name', 'access_token')
+bot.run('login_name', 'access_token', 'client_id')
 ```
 -----------
 
@@ -96,7 +96,7 @@ async def foo(ctx, foo_param: Foo):
     the_stuff = foo_param.stuff()
     # ... do things with the_stuff ...
 
-bot.run('login_name', 'access_token')
+bot.run('login_name', 'access_token', 'client_id')
 ```
 
 -----------
@@ -121,7 +121,7 @@ fuzzy = FuzzyMatch(ratio=FuzzyRatio.SIMPLE, threshold=85)
 async def headcount(ctx, val: int):
     await ctx.send(f'matched, double the user\'s value is {val * 2}')
 
-bot.run('login_name', 'access_token')
+bot.run('login_name', 'access_token', 'client_id')
 ```
 -----------
 
