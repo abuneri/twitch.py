@@ -1,5 +1,5 @@
 # twitch.py
-Python wrapper around the Twitch's Helix and IRC API. General
+**Python 3.7** wrapper around the Twitch's Helix and IRC API. General
 design inspired by the [discord.py](https://github.com/Rapptz/discord.py/) library.
 
 
@@ -18,6 +18,9 @@ design inspired by the [discord.py](https://github.com/Rapptz/discord.py/) libra
     - Optional fuzzy matching on commands
 
 \* The underlying HTTP and Websocket implementations support 100%, but it may not be exposed in the client or models yet (soon:tm:)
+
+## Limitations
+- Currently only Python 3.7 is supported and tested
 
 ## Simple Examples
 A glimpse into the library to get you started!
